@@ -2,59 +2,59 @@ from decimal import Decimal
 from functools import cmp_to_key
 from xml.etree import ElementTree
 
-RDF_NS = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-RDFS_NS = "http://www.w3.org/2000/01/rdf-schema#"
-CIMS_NS = "http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#"
-UML_NS = "http://langdale.com.au/2005/UML#"
-XSD_NS = "http://www.w3.org/2001/XMLSchema#"
-XML_NS = "http://www.w3.org/XML/1998/namespace"
+__RDF_NS = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+__RDFS_NS = "http://www.w3.org/2000/01/rdf-schema#"
+__CIMS_NS = "http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#"
+__UML_NS = "http://langdale.com.au/2005/UML#"
+__XSD_NS = "http://www.w3.org/2001/XMLSchema#"
+__XML_NS = "http://www.w3.org/XML/1998/namespace"
 
-XML_BASE = '{'+XML_NS+'}base'
-DESCRIPTION_TAG = '{'+RDF_NS+'}Description'
-TYPE_TAG = '{'+RDF_NS+'}type'
-LABEL_TAG = '{'+RDFS_NS+'}label'
-COMMENT_TAG = '{'+RDFS_NS+'}comment'
-RESOURCE_ATTRIB = '{'+RDF_NS+'}resource'
-ABOUT_ATTRIB = '{'+RDF_NS+'}about'
-ID_ATTRIB = '{'+RDF_NS+'}ID'
-STEREOTYPE_TAG = '{'+CIMS_NS+'}stereotype'
+__XML_BASE = '{'+__XML_NS+'}base'
+__DESCRIPTION_TAG = '{'+__RDF_NS+'}Description'
+__TYPE_TAG = '{'+__RDF_NS+'}type'
+__LABEL_TAG = '{'+__RDFS_NS+'}label'
+__COMMENT_TAG = '{'+__RDFS_NS+'}comment'
+__RESOURCE_ATTRIB = '{'+__RDF_NS+'}resource'
+__ABOUT_ATTRIB = '{'+__RDF_NS+'}about'
+__ID_ATTRIB = '{'+__RDF_NS+'}ID'
+__STEREOTYPE_TAG = '{'+__CIMS_NS+'}stereotype'
 # Class
-CLASS_TAG = '{'+RDFS_NS+'}Class'
-CLASS_URI = RDFS_NS+'Class'
-SUBCLASSOF_TAG = '{'+RDFS_NS+'}subClassOf'
+__CLASS_TAG = '{'+__RDFS_NS+'}Class'
+__CLASS_URI = __RDFS_NS+'Class'
+__SUBCLASSOF_TAG = '{'+__RDFS_NS+'}subClassOf'
 # Property
-PROPERTY_TAG = '{'+RDF_NS+'}Property'
-PROPERTY_URI = RDF_NS+'Property'
-DOMAIN_TAG = '{'+RDFS_NS+'}domain'
-RANGE_TAG = '{'+RDFS_NS+'}range'
-MULTIPLICITY_TAG = '{' + CIMS_NS + '}multiplicity'
-INVERSEROLE_TAG = '{' + CIMS_NS + '}inverseRoleName'
-DATATYPE_TAG = '{'+CIMS_NS+'}dataType'
+__PROPERTY_TAG = '{'+__RDF_NS+'}Property'
+__PROPERTY_URI = __RDF_NS+'Property'
+__DOMAIN_TAG = '{'+__RDFS_NS+'}domain'
+__RANGE_TAG = '{'+__RDFS_NS+'}range'
+__MULTIPLICITY_TAG = '{' + __CIMS_NS + '}multiplicity'
+__INVERSEROLE_TAG = '{' + __CIMS_NS + '}inverseRoleName'
+__DATATYPE_TAG = '{'+__CIMS_NS+'}dataType'
 # Enumeration
-ENUMERATION_URI = UML_NS+'enumeration'
+__ENUMERATION_URI = __UML_NS+'enumeration'
 # cim data type
-CIMDATATYPE_URI = UML_NS+'cimdatatype'
+__CIMDATATYPE_URI = __UML_NS+'cimdatatype'
 
 def is_class(element):
-    return element.tag == CLASS_TAG or \
-        element.tag == DESCRIPTION_TAG and \
-        element.find(TYPE_TAG).attrib[RESOURCE_ATTRIB] == CLASS_URI
+    return element.tag == __CLASS_TAG or \
+        element.tag == __DESCRIPTION_TAG and \
+        element.find(__TYPE_TAG).attrib[__RESOURCE_ATTRIB] == __CLASS_URI
 
 def is_property(element):
-    return element.tag == PROPERTY_TAG or \
-        element.tag == DESCRIPTION_TAG and \
-        element.find(TYPE_TAG).attrib[RESOURCE_ATTRIB] == PROPERTY_URI
+    return element.tag == __PROPERTY_TAG or \
+        element.tag == __DESCRIPTION_TAG and \
+        element.find(__TYPE_TAG).attrib[__RESOURCE_ATTRIB] == __PROPERTY_URI
 
 def is_enumeration(element):
     return is_class(element) and \
-        element.find(STEREOTYPE_TAG) != None and \
-        element.find(STEREOTYPE_TAG).attrib[RESOURCE_ATTRIB] == ENUMERATION_URI
+        element.find(__STEREOTYPE_TAG) != None and \
+        element.find(__STEREOTYPE_TAG).attrib[__RESOURCE_ATTRIB] == __ENUMERATION_URI
 
 
 def is_cimdatatype(element):
     return is_class(element) and \
-        element.find(STEREOTYPE_TAG) != None and \
-        element.find(STEREOTYPE_TAG).attrib[RESOURCE_ATTRIB] == CIMDATATYPE_URI
+        element.find(__STEREOTYPE_TAG) != None and \
+        element.find(__STEREOTYPE_TAG).attrib[__RESOURCE_ATTRIB] == __CIMDATATYPE_URI
 
 
 #################################
@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
     xmldoc = ElementTree.parse(input_file)
     root = xmldoc.getroot()
-    BASE_NS = root.attrib[XML_BASE].replace('#', '') + '#'
+    __BASE_NS = root.attrib[__XML_BASE].replace('#', '') + '#'
 
     datatype = {
         'float': 'Decimal',
@@ -77,39 +77,39 @@ if __name__ == "__main__":
     }
 
     def get_type(element):
-        if element.tag == DESCRIPTION_TAG:
-            return element.find(TYPE_TAG).attrib[RESOURCE_ATTRIB].split('#')[1]
+        if element.tag == __DESCRIPTION_TAG:
+            return element.find(__TYPE_TAG).attrib[__RESOURCE_ATTRIB].split('#')[1]
         return element.tag.split('}')[1]
 
     def get_resource_label(element):
-        return element.find(LABEL_TAG).text
+        return element.find(__LABEL_TAG).text
         
     def get_resource_id(element):
-        if ID_ATTRIB in element.attrib:
-            return element.attrib[ID_ATTRIB]
-        if ABOUT_ATTRIB in element.attrib:
-            return element.attrib[ABOUT_ATTRIB].split('#')[1]
+        if __ID_ATTRIB in element.attrib:
+            return element.attrib[__ID_ATTRIB]
+        if __ABOUT_ATTRIB in element.attrib:
+            return element.attrib[__ABOUT_ATTRIB].split('#')[1]
 
     def get_resources_by_type(type):
         return filter(lambda resource: get_type(resource) == type, root)
         
     def get_properties_by_domain(domain):
         filt = filter(lambda resource: is_property(resource), root)
-        filt = filter(lambda resource: resource.find(DOMAIN_TAG) != None, filt)
-        filt = filter(lambda resource: resource.find(DOMAIN_TAG).attrib[RESOURCE_ATTRIB].split('#')[1] == domain, filt)
+        filt = filter(lambda resource: resource.find(__DOMAIN_TAG) != None, filt)
+        filt = filter(lambda resource: resource.find(__DOMAIN_TAG).attrib[__RESOURCE_ATTRIB].split('#')[1] == domain, filt)
         return filt
 
     def get_property_multiplicity(element):
-        return prop.find(MULTIPLICITY_TAG).attrib[RESOURCE_ATTRIB].split('#M:')[1]
+        return prop.find(__MULTIPLICITY_TAG).attrib[__RESOURCE_ATTRIB].split('#M:')[1]
 
     def get_superclass(element):
-        superclass_tag = element.find(SUBCLASSOF_TAG)
+        superclass_tag = element.find(__SUBCLASSOF_TAG)
         if superclass_tag != None:
-            return superclass_tag.attrib[RESOURCE_ATTRIB].split('#')[1]
+            return superclass_tag.attrib[__RESOURCE_ATTRIB].split('#')[1]
         return ''
         
     def get_property_inverse_role_name(prop):
-        return prop.find(INVERSEROLE_TAG).attrib[RESOURCE_ATTRIB].split('#')[1] if prop.find(INVERSEROLE_TAG) != None else None
+        return prop.find(__INVERSEROLE_TAG).attrib[__RESOURCE_ATTRIB].split('#')[1] if prop.find(__INVERSEROLE_TAG) != None else None
 
     class URI:
         def __init__(self, uri):
@@ -150,70 +150,79 @@ if __name__ == "__main__":
                 prop_obj = {}
                 prop_obj['multiplicity'] = get_property_multiplicity(prop)
                 prop_obj['inverseRoleName'] = get_property_inverse_role_name(prop)
-                if prop.find(RANGE_TAG) != None:
-                    prop_obj['type'] = prop.find(RANGE_TAG).attrib[RESOURCE_ATTRIB].split('#')[1]
-                elif prop.find(DATATYPE_TAG) != None:
-                    prop_obj['type'] = prop.find(DATATYPE_TAG).attrib[RESOURCE_ATTRIB].split('#')[1]
+                if prop.find(__RANGE_TAG) != None:
+                    prop_obj['type'] = prop.find(__RANGE_TAG).attrib[__RESOURCE_ATTRIB].split('#')[1]
+                elif prop.find(__DATATYPE_TAG) != None:
+                    prop_obj['type'] = prop.find(__DATATYPE_TAG).attrib[__RESOURCE_ATTRIB].split('#')[1]
                 classes[label]['properties'][prop_id] = prop_obj
 
     TEXT = '''from decimal import Decimal
-from typing import List, Optional
-from uuid import uuid4
+from typing import List as List
+from uuid import uuid4 as uuid
 from xml.etree import ElementTree as ET
 
-RDF_NS = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-RDFS_NS = "http://www.w3.org/2000/01/rdf-schema#"
-CIMS_NS = "http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#"
-UML_NS = "http://langdale.com.au/2005/UML#"
-XSD_NS = "http://www.w3.org/2001/XMLSchema#"
-XML_NS = "http://www.w3.org/XML/1998/namespace"
+__RDF_NS = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+__RDFS_NS = "http://www.w3.org/2000/01/rdf-schema#"
+__CIMS_NS = "http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#"
+__UML_NS = "http://langdale.com.au/2005/UML#"
+__XSD_NS = "http://www.w3.org/2001/XMLSchema#"
+__XML_NS = "http://www.w3.org/XML/1998/namespace"
 
-XML_BASE = '{'+XML_NS+'}base'
-DESCRIPTION_TAG = '{'+RDF_NS+'}Description'
-TYPE_TAG = '{'+RDF_NS+'}type'
-LABEL_TAG = '{'+RDFS_NS+'}label'
-COMMENT_TAG = '{'+RDFS_NS+'}comment'
-RESOURCE_ATTRIB = '{'+RDF_NS+'}resource'
-ABOUT_ATTRIB = '{'+RDF_NS+'}about'
-STEREOTYPE_TAG = '{'+CIMS_NS+'}stereotype'
+__XML_BASE = '{'+__XML_NS+'}base'
+__DESCRIPTION_TAG = '{'+__RDF_NS+'}Description'
+__TYPE_TAG = '{'+__RDF_NS+'}type'
+__LABEL_TAG = '{'+__RDFS_NS+'}label'
+__COMMENT_TAG = '{'+__RDFS_NS+'}comment'
+__RESOURCE_ATTRIB = '{'+__RDF_NS+'}resource'
+__ABOUT_ATTRIB = '{'+__RDF_NS+'}about'
+__STEREOTYPE_TAG = '{'+__CIMS_NS+'}stereotype'
 # Class
-CLASS_TAG = '{'+RDFS_NS+'}Class'
-CLASS_URI = RDFS_NS+'Class'
-SUBCLASSOF_TAG = '{'+RDFS_NS+'}subClassOf'
+__CLASS_TAG = '{'+__RDFS_NS+'}Class'
+__CLASS_URI = __RDFS_NS+'Class'
+__SUBCLASSOF_TAG = '{'+__RDFS_NS+'}subClassOf'
 # Property
-PROPERTY_TAG = '{'+RDF_NS+'}Property'
-PROPERTY_URI = RDF_NS+'Property'
-DOMAIN_TAG = '{'+RDFS_NS+'}domain'
-RANGE_TAG = '{'+RDFS_NS+'}range'
-MULTIPLICITY_TAG = '{' + CIMS_NS + '}multiplicity'
-INVERSEROLE_TAG = '{' + CIMS_NS + '}inverseRoleName'
-DATATYPE_TAG = '{'+CIMS_NS+'}dataType'
+__PROPERTY_TAG = '{'+__RDF_NS+'}Property'
+__PROPERTY_URI = __RDF_NS+'Property'
+__DOMAIN_TAG = '{'+__RDFS_NS+'}domain'
+__RANGE_TAG = '{'+__RDFS_NS+'}range'
+__MULTIPLICITY_TAG = '{' + __CIMS_NS + '}multiplicity'
+__INVERSEROLE_TAG = '{' + __CIMS_NS + '}inverseRoleName'
+__DATATYPE_TAG = '{'+__CIMS_NS+'}dataType'
 # Enumeration
-ENUMERATION_URI = UML_NS+'enumeration'
+__ENUMERATION_URI = __UML_NS+'enumeration'
 # cim data type
-CIMDATATYPE_URI = UML_NS+'cimdatatype'
+__CIMDATATYPE_URI = __UML_NS+'cimdatatype'
 
-__pointer = None
+pointer = None
 
 '''
             
     TEXT += f'''
 class CIMRDF_document():
     def __init__(self, _id):
-        global __pointer
-        self.__id = _id
-        __pointer = []
+        global pointer
+        self.id = _id
+        pointer = []
 
     def pack(self):
-        global __pointer
-        root = ET.Element('{'{' + RDF_NS + '}'}RDF')
-        for element in __pointer:
+        global pointer
+        root = ET.Element('{'{' + __RDF_NS + '}'}RDF')
+        for element in pointer:
             root.append(element.serialize())
         return root
 
 def add_element(element):
-    __pointer.append(element)
-'''
+    pointer.append(element)
+
+class Enumeration:
+    def __init__(self, value, allowed):
+        if value not in allowed:
+            raise ValueError(f'{'{'+'value'+'}'} is not in the Enumeration set')
+        self.__value = value
+    def __str__(self):
+        return self.__value
+    def __eq__(self, other):
+        return self.__value == str(other)'''
 
     for enum_name, enum_set in enumerations.items():
         TEXT += f'''
@@ -256,7 +265,7 @@ class {enum_name}(Enumeration):
 class {class_name}({class_detail['super']}):
     def __init__(self):
         {'super().__init__()' if class_detail['super'] else 'add_element(self)'}
-        self.URI = '#' + str(uuid4())'''
+        {"self.URI = '#' + str(uuid())" if not class_detail['super'] else ''}'''
         #<<<<<<<<<<<<<<<<<<<<<<
 
         # List instance attributes
@@ -292,13 +301,14 @@ class {class_name}({class_detail['super']}):
             else:
                 TEXT += f'''
     def add_{prop_name}(self, value: {dtype if dtype in datatype.values() else f"'{dtype}'"}):
-        self.__{prop_name}.append(value)'''
+        if value not in self.__{prop_name}:
+            self.__{prop_name}.append(value)'''
                 if inverseRoleName:
                     TEXT += f'''
-        if isinstance(value.{inverseRoleName}, list):
-            value.add_{inverseRoleName}(self)
-        else:
-            value.{inverseRoleName} = self'''
+            if isinstance(value.{inverseRoleName}, list):
+                value.add_{inverseRoleName}(self)
+            else:
+                value.{inverseRoleName} = self'''
                 TEXT += f'''
     @property
     def {prop_name}(self) -> List[{dtype if dtype in datatype.values() else f"'{dtype}'"}]:
@@ -314,14 +324,20 @@ class {class_name}({class_detail['super']}):
                     obj.add_{inverseRoleName}(self)
             else:
                 for obj in list_objs:
-                    value.{inverseRoleName} = self'''
+                    obj.{inverseRoleName} = self'''
 
         # SERIALIZATION #####################################################################
 
         TEXT += f'''
     def serialize(self) -> ET.Element:
-        self.validate()
-        root = ET.Element('{'{'+BASE_NS+'}'}{class_name}', attrib={"{'{"+RDF_NS+"}about': self.URI}"})'''
+        self.validate()'''
+        if class_detail['super']:
+            TEXT += f'''
+        root = super().serialize()
+        root.tag = '{'{' + __BASE_NS + '}'}{class_name}' '''
+        else:
+            TEXT += f'''
+        root = ET.Element('{'{'+__BASE_NS+'}'}{class_name}', attrib={"{'{"+__RDF_NS+"}about': self.URI}"})'''
         
         for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter(class_detail['properties']):
             
@@ -331,12 +347,12 @@ class {class_name}({class_detail['super']}):
         if self.__{prop_name} != None:'''
                 if dtype in datatype.values() or dtype in enumerations: # If it is a primitive or an enumeration
                     TEXT += f'''
-            prop = ET.SubElement(root, '{'{'+BASE_NS+'}'}{prop_name.replace('_','.')}')
+            prop = ET.SubElement(root, '{'{'+__BASE_NS+'}'}{prop_name.replace('_','.')}')
             prop.text = str(self.__{prop_name})'''
 
                 else: # if it is a complex type
                     TEXT += f'''
-            ET.SubElement(root, '{'{'+BASE_NS+'}'}{prop_name.replace('_','.')}', attrib={"{'{" +RDF_NS+"}"}resource': self.__{prop_name+'.URI}'})'''
+            ET.SubElement(root, '{'{'+__BASE_NS+'}'}{prop_name.replace('_','.')}', attrib={"{'{" +__RDF_NS+"}"}resource': self.__{prop_name+'.URI}'})'''
             
 
 
@@ -348,12 +364,12 @@ class {class_name}({class_detail['super']}):
             
                 if dtype in datatype.values() or dtype in enumerations: # If they are primitives
                     TEXT += f'''
-                prop = ET.SubElement(root, '{'{'+BASE_NS+'}'}{prop_name.replace('_','.')}')
+                prop = ET.SubElement(root, '{'{'+__BASE_NS+'}'}{prop_name.replace('_','.')}')
                 prop.text = str(item)'''
                 
                 else: # if it is a complex type
                     TEXT += f'''
-                ET.SubElement(root, '{'{'+BASE_NS+'}'}{prop_name.replace('_','.')}', attrib={"{'{" +RDF_NS+"}"}resource': item.URI{'}'})'''
+                ET.SubElement(root, '{'{'+__BASE_NS+'}'}{prop_name.replace('_','.')}', attrib={"{'{" +__RDF_NS+"}"}resource': item.URI{'}'})'''
         
         
         
@@ -397,22 +413,22 @@ def fromfile(filename):
 
 def __import(etree):
     def get_type(element):
-        if element.tag == DESCRIPTION_TAG:
-            return element.find(TYPE_TAG).attrib[RESOURCE_ATTRIB].split('#')[1]
+        if element.tag == __DESCRIPTION_TAG:
+            return element.find(__TYPE_TAG).attrib[__RESOURCE_ATTRIB].split('#')[1]
         return element.tag.split('}')[1]
     def get_element_URI(element):
         try:
-            return BASE_NS.replace('#','') + '#' + element.attrib[ID_ATTRIB]
+            return __BASE_NS.replace('#','') + '#' + element.attrib[__ID_ATTRIB]
         except:
-            return BASE_NS.replace('#','') + element.attrib[ABOUT_ATTRIB]
+            return __BASE_NS.replace('#','') + element.attrib[__ABOUT_ATTRIB]
 
     root = etree.getroot()
     classes = {}
 
     try:
-        BASE_NS = root.attrib[XML_BASE].replace('#', '') + '#'
+        __BASE_NS = root.attrib[__XML_BASE].replace('#', '') + '#'
     except:
-        BASE_NS = ''
+        __BASE_NS = ''
 
     for child in root:
         new_class = get_type(child)
@@ -426,7 +442,7 @@ def __import(etree):
         for attribute in child:
             dtype = get_type(attribute).replace('.', '_')
             try:
-                resource_uri = attribute.attrib[RESOURCE_ATTRIB]
+                resource_uri = attribute.attrib[__RESOURCE_ATTRIB]
                 exec(f'element.{dtype} = classes[resource_uri]')
             except:
                 value = attribute.text

@@ -160,6 +160,7 @@ if __name__ == "__main__":
 from typing import List as List
 from uuid import uuid4 as uuid
 from xml.etree import ElementTree as ET
+from xml.dom.minidom import parseString
 
 __RDF_NS = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 __RDFS_NS = "http://www.w3.org/2000/01/rdf-schema#"
@@ -192,27 +193,34 @@ __DATATYPE_TAG = '{'+__CIMS_NS+'}dataType'
 __ENUMERATION_URI = __UML_NS+'enumeration'
 # cim data type
 __CIMDATATYPE_URI = __UML_NS+'cimdatatype'
-
-pointer = None
-
 '''
             
     TEXT += f'''
-class CIMRDF_document():
-    def __init__(self, _id):
-        global pointer
-        self.id = _id
-        pointer = []
+class DocumentCIMRDF():
+    def __init__(self, resources = []):
+        self.resources = []
+        for resource in resources:
+            self.resources.append(resource)
 
+    def add_elements(self, elements):
+        elements = elements if isinstance(elements, list) else [elements]
+        for element in elements:
+            self.resources.append(element)
+
+    def prettify(self):
+        etree = self.pack()
+        rough_string = ET.tostring(etree, 'utf-8')
+        reparsed = parseString(rough_string)
+        print(reparsed.toprettyxml(indent='    '))
+    
     def pack(self):
-        global pointer
-        root = ET.Element('{'{' + __RDF_NS + '}'}RDF')
-        for element in pointer:
+        root = ET.Element('{'{'+__RDF_NS+'}'}RDF')
+        for element in self.resources:
             root.append(element.serialize())
         return root
 
-def add_element(element):
-    pointer.append(element)
+    def __str__(self):
+        return ET.tostring(self.pack())
 
 class Enumeration:
     def __init__(self, value, allowed):
@@ -222,7 +230,8 @@ class Enumeration:
     def __str__(self):
         return self.__value
     def __eq__(self, other):
-        return self.__value == str(other)'''
+        return self.__value == str(other)
+'''
 
     for enum_name, enum_set in enumerations.items():
         TEXT += f'''
@@ -264,7 +273,7 @@ class {enum_name}(Enumeration):
         TEXT += f''' 
 class {class_name}({class_detail['super']}):
     def __init__(self):
-        {'super().__init__()' if class_detail['super'] else 'add_element(self)'}
+        {'super().__init__()' if class_detail['super'] else ''}
         {"self.URI = '#' + str(uuid())" if not class_detail['super'] else ''}'''
         #<<<<<<<<<<<<<<<<<<<<<<
 
@@ -291,7 +300,7 @@ class {class_name}({class_detail['super']}):
     @{prop_name}.setter
     def {prop_name}(self, value: {dtype if dtype in datatype.values() else f"'{dtype}'"}):
         if self.__{prop_name} == None:
-            self.__{prop_name} = {'str(value).lower() == "true"' if dtype == 'bool' else (dtype+'(value)' if dtype in datatype.values() or dtype in enumerations else 'value')}'''
+            self.__{prop_name} = value'''
                 if inverseRoleName:
                     TEXT += f'''
             if isinstance(value.{inverseRoleName}, list):
@@ -348,7 +357,7 @@ class {class_name}({class_detail['super']}):
                 if dtype in datatype.values() or dtype in enumerations: # If it is a primitive or an enumeration
                     TEXT += f'''
             prop = ET.SubElement(root, '{'{'+__BASE_NS+'}'}{prop_name.replace('_','.')}')
-            prop.text = str(self.__{prop_name})'''
+            prop.text = {'str(self.__'+prop_name+').lower()' if dtype == 'bool' else f'str(self.__{prop_name})'}'''
 
                 else: # if it is a complex type
                     TEXT += f'''

@@ -4,7 +4,7 @@ Generate Python data structures from CIM RDF profiles, parse and serialize CIM-c
 1. Generate your RDF artifact
 2. Convert to Python data structures with :
 ```
-generator.py input_filename.xml output.py
+python generator.py input_filename.xml output.py
 ```
 ## To create CIM RDF instances
 3a. Use the generated classes from output_filename.py to create your instance
@@ -41,7 +41,7 @@ The available functions are:
   * ***new.tostring()***: Get the XML stringified version of the document
   * ***new.add_elements( ... )***: Add new elements (one or a list) to the document
   
-## To parse CIM RDF instances###
+## To parse CIM RDF instances
 3b. Use proper functions to parse file or string.
 ```
 instances = fromstring(xmlstring)

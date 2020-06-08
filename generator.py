@@ -111,24 +111,6 @@ if __name__ == "__main__":
     def get_property_inverse_role_name(prop):
         return prop.find(__INVERSEROLE_TAG).attrib[__RESOURCE_ATTRIB].split('#')[1] if prop.find(__INVERSEROLE_TAG) != None else None
 
-    class URI:
-        def __init__(self, uri):
-            self.__ns = ''
-            self.__id = ''
-            self.uri = uri
-        @property
-        def uri(self):
-            return self.__ns + '#' + self.__id
-        @uri.setter
-        def uri(self, value):
-            if '#' in value:
-                _ns, _id = value.split('#')
-                self.__ns = _ns if _ns != '' else self.__ns
-                self.__id = _id if _id != '' else self.__id
-            else:
-                self.__id = value
-            
-
     enumerations = {}
     classes = {}
 
@@ -157,7 +139,7 @@ if __name__ == "__main__":
                 classes[label]['properties'][prop_id] = prop_obj
 
     TEXT = '''from decimal import Decimal
-from typing import List as List
+from typing import List, Union
 from uuid import uuid4 as uuid
 from xml.etree import ElementTree as ET
 from xml.dom.minidom import parseString
@@ -194,7 +176,63 @@ __ENUMERATION_URI = __UML_NS+'enumeration'
 # cim data type
 __CIMDATATYPE_URI = __UML_NS+'cimdatatype'
 '''
-            
+    TEXT += f"__BASE_NS = '{__BASE_NS}'"
+    TEXT += '''
+def fromstring(xml):
+    etree = ET.fromstring(xml)
+    return __import(etree)
+def fromfile(filename):
+    etree = ET.parse(filename)
+    return __import(etree)
+
+def __import(etree):
+    def get_type(element):
+        if element.tag == __DESCRIPTION_TAG:
+            return element.find(__TYPE_TAG).attrib[__RESOURCE_ATTRIB].split('#')[1]
+        return element.tag.split('}')[1]
+    def get_element_URI(element):
+        try:
+            return __BASE_NS.replace('#','') + '#' + element.attrib[__ID_ATTRIB]
+        except:
+            return __BASE_NS.replace('#','') + element.attrib[__ABOUT_ATTRIB]
+
+    root = etree
+    classes = {}
+
+    try:
+        __BASE_NS = root.attrib[__XML_BASE].replace('#', '') + '#'
+    except:
+        __BASE_NS = ''
+
+    for child in root:
+        new_class = get_type(child)
+        uri = '#' + get_element_URI(child).split('#')[1]
+        classes[uri] = eval(new_class + '()')
+        classes[uri].URI = uri
+
+    for child in root:
+        uri = '#' + get_element_URI(child).split('#')[1]
+        element = classes[uri]
+        for attribute in child:
+            dtype = get_type(attribute).replace('.', '_')
+            if __RESOURCE_ATTRIB in attribute.attrib:
+                resource_uri = attribute.attrib[__RESOURCE_ATTRIB]
+                exec(f"""
+if isinstance(element.{dtype}, list):
+   element.add_{dtype}(classes[resource_uri])
+else:
+   element.{dtype} = classes[resource_uri]
+""")
+            else:
+                value = attribute.text
+                exec(f"""
+if isinstance(element.{dtype}, list):
+    element.add_{dtype}(value)
+else:
+    element.{dtype} = value
+""")
+
+    return classes'''          
     TEXT += f'''
 class DocumentCIMRDF():
     def __init__(self, resources = []):
@@ -202,24 +240,24 @@ class DocumentCIMRDF():
         for resource in resources:
             self.resources.append(resource)
 
-    def add_elements(self, elements):
+    def add_elements(self, elements: Union[ET.Element, List[ET.Element]]):
         elements = elements if isinstance(elements, list) else [elements]
         for element in elements:
             self.resources.append(element)
 
-    def prettify(self):
+    def dump(self):
         etree = self.pack()
         rough_string = ET.tostring(etree, 'utf-8')
         reparsed = parseString(rough_string)
-        print(reparsed.toprettyxml(indent='    '))
+        print(reparsed.toprettyxml(indent=' '*4))
     
     def pack(self):
-        root = ET.Element('{'{'+__RDF_NS+'}'}RDF')
+        root = ET.Element('{'{'+__RDF_NS+'}'}RDF', attrib={"{'"+__XML_BASE+"': '"+__BASE_NS.replace('#','')+"/new_resource#'}"})
         for element in self.resources:
             root.append(element.serialize())
         return root
 
-    def __str__(self):
+    def tostring(self):
         return ET.tostring(self.pack())
 
 class Enumeration:
@@ -273,8 +311,7 @@ class {enum_name}(Enumeration):
         TEXT += f''' 
 class {class_name}({class_detail['super']}):
     def __init__(self):
-        {'super().__init__()' if class_detail['super'] else ''}
-        {"self.URI = '#' + str(uuid())" if not class_detail['super'] else ''}'''
+        {'super().__init__()' if class_detail['super'] else "self.URI = '#' + str(uuid())"}'''
         #<<<<<<<<<<<<<<<<<<<<<<
 
         # List instance attributes
@@ -300,7 +337,7 @@ class {class_name}({class_detail['super']}):
     @{prop_name}.setter
     def {prop_name}(self, value: {dtype if dtype in datatype.values() else f"'{dtype}'"}):
         if self.__{prop_name} == None:
-            self.__{prop_name} = value'''
+            self.__{prop_name} = {dtype+'(value)' if dtype in ['str', 'int', 'Decimal'] else ('str(value).lower() == "true"' if dtype in ['bool'] else 'value')}'''
                 if inverseRoleName:
                     TEXT += f'''
             if isinstance(value.{inverseRoleName}, list):
@@ -411,53 +448,6 @@ class {class_name}({class_detail['super']}):
                 #<<<<<<<<<<<<<<<<<<<<<<
 
         TEXT += '\n'
-
-    TEXT += '''
-def fromstring(xml):
-    etree = ET.fromstring(xml)
-    return __import(etree)
-def fromfile(filename):
-    etree = ET.parse(filename)
-    return __import(etree)
-
-def __import(etree):
-    def get_type(element):
-        if element.tag == __DESCRIPTION_TAG:
-            return element.find(__TYPE_TAG).attrib[__RESOURCE_ATTRIB].split('#')[1]
-        return element.tag.split('}')[1]
-    def get_element_URI(element):
-        try:
-            return __BASE_NS.replace('#','') + '#' + element.attrib[__ID_ATTRIB]
-        except:
-            return __BASE_NS.replace('#','') + element.attrib[__ABOUT_ATTRIB]
-
-    root = etree.getroot()
-    classes = {}
-
-    try:
-        __BASE_NS = root.attrib[__XML_BASE].replace('#', '') + '#'
-    except:
-        __BASE_NS = ''
-
-    for child in root:
-        new_class = get_type(child)
-        uri = get_element_URI(child)
-        classes[uri] = eval(new_class + '()')
-        exec(new_class + ".URI = " + "'" + uri + "'")
-
-    for child in root:
-        uri = get_element_URI(child)
-        element = classes[uri]
-        for attribute in child:
-            dtype = get_type(attribute).replace('.', '_')
-            try:
-                resource_uri = attribute.attrib[__RESOURCE_ATTRIB]
-                exec(f'element.{dtype} = classes[resource_uri]')
-            except:
-                value = attribute.text
-                exec(f'element.{dtype} = value')
-
-    return classes'''
 
     with open(output_file, 'w') as file:
         file.write(TEXT)

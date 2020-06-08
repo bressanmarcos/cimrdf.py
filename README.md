@@ -7,7 +7,7 @@ Generate Python data structures from CIM RDF profiles, parse and serialize CIM-c
 python generator.py input_filename.xml output.py
 ```
 ## To create CIM RDF instances
-3a. Use the generated classes from output_filename.py to create your instance
+3a. Use the generated classes from output.py to create your instances
 ```
 from output import *
 
@@ -29,7 +29,8 @@ t2.Terminal_ConductingEquipment = s
 
 cn = ConnectivityNode()
 cn.IdentifiedObject_mRID = 'Node23'
-cn.ConnectivityNode_Terminals = [t1, t]
+cn.ConnectivityNode_Terminals = [t1, t] 
+// This associates reciprocally Terminals t and t1 to ConnectivityNode cn, and vice versa
 ```
 4a. Create a new document instance with all objects
 ```

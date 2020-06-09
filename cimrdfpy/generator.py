@@ -60,10 +60,8 @@ def is_cimdatatype(element):
 #################################
 import sys
 
-if __name__ == "__main__":
-    argv = sys.argv
-    input_file = argv[1]
-    output_file = argv[2]
+def main():
+    input_file, output_file = sys.argv[1:3]
 
     xmldoc = ElementTree.parse(input_file)
     root = xmldoc.getroot()
@@ -451,3 +449,6 @@ class {class_name}({class_detail['super']}):
 
     with open(output_file, 'w') as file:
         file.write(TEXT)
+
+if __name__ == "__main__":
+    main()

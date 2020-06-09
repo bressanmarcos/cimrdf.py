@@ -1,12 +1,20 @@
 # cimrdf.py
 Generate Python data structures from CIM RDF profiles, parse and serialize CIM-compliant information objects, according to IEC 61970-501 standard.
 
-1. Generate your RDF artifact
-2. Convert to Python data structures with :
+## Installing
+``` bash:
+$ git clone https://github.com/bressanmarcos/cimrdf.py.git
+$ cd cimrdf.py
+$ python setup.py install 
 ```
-python generator.py input_filename.xml output.py
+
+## Using
+1. Create your RDF artifact with you preferred utils
+2. Convert it into Python data structures with:
 ```
-## To create CIM RDF instances
+cimrdfpy input_filename.xml output.py
+```
+## Creating CIM RDF instances
 3a. Use the generated classes from output.py to create your instances
 ```
 from output import *
@@ -42,7 +50,7 @@ The available functions are:
   * ***new.tostring()***: Get the XML stringified version of the document
   * ***new.add_elements( ... )***: Add new elements (one or a list) to the document
   
-## To parse CIM RDF instances
+## Parsing CIM RDF instances
 3b. Use proper functions to parse file or string.
 ```
 instances = fromstring(xmlstring)
@@ -50,5 +58,5 @@ print(instances)
 // [list of instances]
 ```
 The available functions are:
-  * ***fromstring(xmlstring)***: Get instances from CIM RDF string
-  * ***fromfile(filename)***: Get instances from CIM RDF file
+  * ***fromstring(xmlstring)***: Get list of instances from CIM RDF string
+  * ***fromfile(filename)***: Get list of instances from CIM RDF file

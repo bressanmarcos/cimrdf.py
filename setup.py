@@ -20,7 +20,7 @@ setup(
             'cimrdfpy = cimrdfpy.generator:main'
         ]
     },
-    packages=['cimrdf_py'],
+    packages=['cimrdfpy'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

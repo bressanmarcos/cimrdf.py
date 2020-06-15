@@ -1,14 +1,14 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.1'
+version = '0.2'
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
     name="cimrdf.py",
-    version="0.1",
+    version=version,
     author="Marcos Bressan",
     author_email="bressanmarcos@alu.ufc.br",
     description="Generate Python data structures from CIM RDF profiles, parse and serialize CIM-compliant information objects, according to IEC 61970-501 standard",

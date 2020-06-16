@@ -433,7 +433,7 @@ class {class_name}({class_detail['super']}):
                 #>>>>>>>>>>>>>>>>>>>>>>
                 TEXT += f'''
         if not isinstance(self.{prop_name}, {dtype}){f' and self.{prop_name} != None' if minBound == 0 else ''}:
-            raise ValueError('Incorrect datatype in {prop_name}')'''
+            raise ValueError('Incorrect datatype in {prop_name} (expected {dtype})')'''
                 #<<<<<<<<<<<<<<<<<<<<<<
             else:
                 #>>>>>>>>>>>>>>>>>>>>>>
@@ -442,7 +442,7 @@ class {class_name}({class_detail['super']}):
         if len(self.{prop_name}) < minBound or len(self.{prop_name}) > maxBound:
             raise ValueError('Incorrect multiplicity in {prop_name}')
         if any(not isinstance(item, {dtype}) for item in self.{prop_name}):
-            raise ValueError('Incorrect datatype in {prop_name}')'''
+            raise ValueError('Incorrect datatype in {prop_name} (expected {dtype})')'''
                 #<<<<<<<<<<<<<<<<<<<<<<
 
         TEXT += '\n'

@@ -58,8 +58,8 @@ def test_import_export():
     from xml.etree import ElementTree as ET
     bv = BaseVoltage()
     v = Voltage()
-    v.Voltage_multiplier = UnitMultiplier('k')
-    v.Voltage_unit = UnitSymbol('none')
+    v.Voltage_multiplier = UnitMultiplier(UnitMultiplier.K)
+    v.Voltage_unit = UnitSymbol(UnitSymbol.NONE)
     v.Voltage_value = '2.001'
     bv.BaseVoltage_nominalVoltage = v
     document = DocumentCIMRDF([v, bv])

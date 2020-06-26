@@ -272,7 +272,11 @@ class Enumeration:
 
     for enum_name, enum_set in enumerations.items():
         TEXT += f'''
-class {enum_name}(Enumeration):
+class {enum_name}(Enumeration):'''
+        for enum_value in enum_set:
+            TEXT += f'''
+    {enum_value.upper()} = '{enum_value}' '''
+        TEXT += f'''
     def __init__(self, value: str):
         self.__ALLOWED = {enum_set}
         super().__init__(value, self.__ALLOWED)

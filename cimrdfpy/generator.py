@@ -156,6 +156,7 @@ __LABEL_TAG = '{'+__RDFS_NS+'}label'
 __COMMENT_TAG = '{'+__RDFS_NS+'}comment'
 __RESOURCE_ATTRIB = '{'+__RDF_NS+'}resource'
 __ABOUT_ATTRIB = '{'+__RDF_NS+'}about'
+__ID_ATTRIB = '{'+__RDF_NS+'}ID'
 __STEREOTYPE_TAG = '{'+__CIMS_NS+'}stereotype'
 # Class
 __CLASS_TAG = '{'+__RDFS_NS+'}Class'

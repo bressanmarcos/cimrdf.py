@@ -351,3 +351,9 @@ MigrationBackup/
 
 # vscode
 .vscode/
+
+# others
+dist
+build
+*.egg*
+*cache*

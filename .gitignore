@@ -357,3 +357,4 @@ dist
 build
 *.egg*
 *cache*
+tests/output.py

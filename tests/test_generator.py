@@ -113,11 +113,18 @@ def test_recover_from_xml():
     switches = list(filter(lambda x: isinstance(x, Switch), a))
     print(switches)
 
-    # Print to stdout again for comparison
-    # renew.dump()
+def test_new_version():
 
-    a = list(instances.values())
+    from output import EquivalentInjection, Terminal, Switch, ConnectivityNode, DocumentCIMRDF
 
-    switches = list(filter(lambda x: isinstance(x, Switch), a))
+    s1 = Switch(Switch_normalOpen=True, Switch_open=False, IdentifiedObject_mRID='CH12')
+    t1 = Terminal()
+    t2 = Terminal()
+    s1 = Switch(Switch_normalOpen=True, Switch_open=False, IdentifiedObject_mRID='CH12', ConductingEquipment_Terminals=[t1, t2])
+    print(s1.ConductingEquipment_Terminals)
+    cn = ConnectivityNode(ConnectivityNode_Terminals=[t1], IdentifiedObject_mRID='COnnectivityNode')
 
-    # print(switches)
+    doc = DocumentCIMRDF([s1, t1, t2, cn])
+    doc.dump()
+
+    doc = DocumentCIMRDF()

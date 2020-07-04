@@ -135,7 +135,15 @@ def main():
                 elif prop.find(__DATATYPE_TAG) != None:
                     prop_obj['type'] = prop.find(__DATATYPE_TAG).attrib[__RESOURCE_ATTRIB].split('#')[1]
                 classes[label]['properties'][prop_id] = prop_obj
-
+    
+    # Define all super properties
+    for class_name, class_detail in classes.items():
+        classes[class_name]['superproperties'] = {}
+        current_node = class_name
+        while current_node != '':
+            classes[class_name]['superproperties'].update(classes[current_node]['properties'])
+            current_node = classes[current_node]['super']
+    
     TEXT = '''from decimal import Decimal
 from typing import List, Union
 from uuid import uuid4 as uuid
@@ -225,7 +233,7 @@ else:
     element.{dtype} = value
 """)
 
-    return classes'''          
+    return classes'''      
     TEXT += f'''
 
 class DocumentCIMRDF():
@@ -299,7 +307,7 @@ class {enum_name}(Enumeration):'''
 
     def property_iter(properties):
         for prop_name in properties:
-            new_property = class_detail['properties'][prop_name]
+            new_property = properties[prop_name]
             dtype = new_property['type'] if new_property['type'] not in datatype else datatype[new_property['type']]
             inverseRoleName = new_property['inverseRoleName']
             if '..' in new_property['multiplicity']:
@@ -313,25 +321,38 @@ class {enum_name}(Enumeration):'''
             yield (prop_name.replace(".", "_"), dtype.replace(".", "_"), inverseRoleName and inverseRoleName.replace(".", "_"), minBound, maxBound)
 
     for class_name, class_detail in class_iter(classes):
-        #>>>>>>>>>>>>>>>>>>>>>>
+        # Class __init_
         TEXT += f''' 
 class {class_name}({class_detail['super']}):
-    def __init__(self):
-        {'super().__init__()' if class_detail['super'] else "self.URI = '#' + str(uuid())"}'''
-        #<<<<<<<<<<<<<<<<<<<<<<
+    def __init__(self'''
+
+        # Constructor attributes
+        for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter(class_detail['superproperties']):
+            if maxBound < 2:
+                TEXT += f''', {prop_name}: {dtype if dtype in datatype.values() else f"'{dtype}'"} = None'''
+            else:
+                TEXT += f''', {prop_name}: List[{dtype if dtype in datatype.values() else f"'{dtype}'"}] = []'''
+        TEXT += '):'
+
+        # Super class
+        if class_detail['super']:
+            TEXT += f'''
+        super().__init__('''
+
+            # Super call attributes
+            for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter(classes[class_detail['super']]['superproperties']):
+                TEXT += f'''{prop_name} = {prop_name}, '''
+            TEXT += ')'
+
+        # URI generate URI
+        else:
+            TEXT += f'''
+        self.URI = '#' + str(uuid())'''
 
         # List instance attributes
         for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter(class_detail['properties']):
-            if maxBound < 2:
-                #>>>>>>>>>>>>>>>>>>>>>>
-                TEXT += f'''
-        self.__{prop_name}: {dtype if dtype in datatype.values() else f"'{dtype}'"} = None'''
-                #<<<<<<<<<<<<<<<<<<<<<<
-            else:
-                #>>>>>>>>>>>>>>>>>>>>>>
-                TEXT += f'''
-        self.__{prop_name}: List[{dtype if dtype in datatype.values() else f"'{dtype}'"}] = []'''
-                #<<<<<<<<<<<<<<<<<<<<<<
+            TEXT += f'''
+        self.{prop_name} = {prop_name}'''
 
         # Define Properties
         for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter(class_detail['properties']):
@@ -342,7 +363,9 @@ class {class_name}({class_detail['super']}):
         return self.__{prop_name}
     @{prop_name}.setter
     def {prop_name}(self, value: {dtype if dtype in datatype.values() else f"'{dtype}'"}):
-        if self.__{prop_name} == None:
+        if value == None:
+            self.__{prop_name} = None
+        else:
             self.__{prop_name} = {dtype+'(value)' if dtype in ['str', 'int', 'Decimal'] else ('str(value).lower() == "true"' if dtype in ['bool'] else 'value')}'''
                 if inverseRoleName:
                     TEXT += f'''
@@ -367,10 +390,10 @@ class {class_name}({class_detail['super']}):
         return self.__{prop_name}
     @{prop_name}.setter
     def {prop_name}(self, list_objs: List[{dtype if dtype in datatype.values() else f"'{dtype}'"}]):
-        if self.__{prop_name} == []:
-            self.__{prop_name} = list_objs'''
+        self.__{prop_name} = list_objs'''
                 if inverseRoleName:
                     TEXT += f'''
+        if len(list_objs):
             if isinstance(list_objs[0].{inverseRoleName}, list):
                 for obj in list_objs:
                     obj.add_{inverseRoleName}(self)

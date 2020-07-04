@@ -331,7 +331,7 @@ class {class_name}({class_detail['super']}):
             if maxBound < 2:
                 TEXT += f''', {prop_name}: {dtype if dtype in datatype.values() else f"'{dtype}'"} = None'''
             else:
-                TEXT += f''', {prop_name}: List[{dtype if dtype in datatype.values() else f"'{dtype}'"}] = []'''
+                TEXT += f''', {prop_name}: List[{dtype if dtype in datatype.values() else f"'{dtype}'"}] = None'''
         TEXT += '):'
 
         # Super class
@@ -365,7 +365,7 @@ class {class_name}({class_detail['super']}):
     def {prop_name}(self, value: {dtype if dtype in datatype.values() else f"'{dtype}'"}):
         if value == None:
             self.__{prop_name} = None
-        else:
+        elif not hasattr(self, '{prop_name}') or not self.{prop_name} is value:
             self.__{prop_name} = {dtype+'(value)' if dtype in ['str', 'int', 'Decimal'] else ('str(value).lower() == "true"' if dtype in ['bool'] else 'value')}'''
                 if inverseRoleName:
                     TEXT += f'''
@@ -373,9 +373,12 @@ class {class_name}({class_detail['super']}):
                 value.add_{inverseRoleName}(self)
             else:
                 value.{inverseRoleName} = self'''
-            else:
+            
+            elif maxBound >= 2:
                 TEXT += f'''
     def add_{prop_name}(self, value: {dtype if dtype in datatype.values() else f"'{dtype}'"}):
+        if self.__{prop_name} is None:
+            self.__{prop_name} = []
         if value not in self.__{prop_name}:
             self.__{prop_name}.append(value)'''
                 if inverseRoleName:
@@ -390,10 +393,13 @@ class {class_name}({class_detail['super']}):
         return self.__{prop_name}
     @{prop_name}.setter
     def {prop_name}(self, list_objs: List[{dtype if dtype in datatype.values() else f"'{dtype}'"}]):
-        self.__{prop_name} = list_objs'''
+        if list_objs == None:
+            self.__{prop_name} = []
+        else:
+            self.__{prop_name} = list_objs'''
                 if inverseRoleName:
                     TEXT += f'''
-        if len(list_objs):
+        if list_objs and len(list_objs):
             if isinstance(list_objs[0].{inverseRoleName}, list):
                 for obj in list_objs:
                     obj.add_{inverseRoleName}(self)

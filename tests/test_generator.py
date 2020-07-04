@@ -117,7 +117,6 @@ def test_new_version():
 
     from output import EquivalentInjection, Terminal, Switch, ConnectivityNode, DocumentCIMRDF
 
-    s1 = Switch(Switch_normalOpen=True, Switch_open=False, IdentifiedObject_mRID='CH12')
     t1 = Terminal()
     t2 = Terminal()
     s1 = Switch(Switch_normalOpen=True, Switch_open=False, IdentifiedObject_mRID='CH12', ConductingEquipment_Terminals=[t1, t2])
@@ -127,4 +126,29 @@ def test_new_version():
     doc = DocumentCIMRDF([s1, t1, t2, cn])
     doc.dump()
 
-    doc = DocumentCIMRDF()
+def test_new_version_debug():
+    from output import Substation, Feeder, DocumentCIMRDF
+
+    substation_1 = Substation(IdentifiedObject_mRID='S1')
+    substation_2 = Substation(IdentifiedObject_mRID='S2')
+    substation_3 = Substation(IdentifiedObject_mRID='S3')
+
+    print (substation_1.Substation_SubstationFeeder is substation_1.Substation_SubstationFeeder)
+    print (substation_1.Substation_SubstationFeeder is substation_2.Substation_SubstationFeeder)
+
+    feeder_1_s1 = Feeder(IdentifiedObject_mRID='S1_AL1', Feeder_FeedingSubstation=substation_1)
+    feeder_2_s1 = Feeder(IdentifiedObject_mRID='S1_AL2', Feeder_FeedingSubstation=substation_1)
+    feeder_3_s1 = Feeder(IdentifiedObject_mRID='S1_AL3', Feeder_FeedingSubstation=substation_1)
+    feeder_4_s1 = Feeder(IdentifiedObject_mRID='S1_AL4', Feeder_FeedingSubstation=substation_1)
+
+    feeder_1_s2 = Feeder(IdentifiedObject_mRID='S2_AL1', Feeder_FeedingSubstation=substation_2)
+    feeder_2_s2 = Feeder(IdentifiedObject_mRID='S2_AL2', Feeder_FeedingSubstation=substation_2)
+
+    feeder_1_s3 = Feeder(IdentifiedObject_mRID='S3_AL1', Feeder_FeedingSubstation=substation_3)
+
+    doc = DocumentCIMRDF([substation_1, substation_2, substation_3, 
+    feeder_1_s1, feeder_2_s1, feeder_3_s1, feeder_4_s1, feeder_1_s2, feeder_2_s2, feeder_1_s3])
+
+    doc.dump()
+
+# test_new_version_debug()

@@ -322,29 +322,13 @@ Usage : Extended-Ward is a result of network reduction prior to the data exchang
 		<cims:belongsToCategory rdf:resource="#Package_Feeder"/>
 		<rdfs:subClassOf rdf:resource="#EquipmentContainer"/>
 	</rdf:Description>
-	<rdf:Description rdf:about="#IEC61970CIMVersion">
-		<rdf:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Class"/>
-		<rdfs:label>IEC61970CIMVersion</rdfs:label>
-		<rdfs:comment>This is the IEC 61970 CIM version number assigned to this UML model.</rdfs:comment>
-		<cims:belongsToCategory rdf:resource="#Package_IEC61970"/>
-	</rdf:Description>
-	<rdf:Description rdf:about="#IEC61970CIMVersion.date">
+	<rdf:Description rdf:about="#Feeder.FeedingSubstation">
 		<rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"/>
-		<rdfs:label>date</rdfs:label>
-		<rdfs:comment>Form is YYYY-MM-DD for example for January 5, 2009 it is 2009-01-05.</rdfs:comment>
-		<rdfs:domain rdf:resource="#IEC61970CIMVersion"/>
-		<cims:dataType rdf:resource="http://www.w3.org/2001/XMLSchema#date"/>
-		<cims:multiplicity rdf:resource="http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1"/>
-		<cims:stereotype rdf:resource="http://langdale.com.au/2005/UML#attribute"/>
-	</rdf:Description>
-	<rdf:Description rdf:about="#IEC61970CIMVersion.version">
-		<rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"/>
-		<rdfs:label>version</rdfs:label>
-		<rdfs:comment>Form is IEC61970CIMXXvYY where XX is the major CIM package version and the YY is the minor version. For example IEC61970CIM13v18.</rdfs:comment>
-		<rdfs:domain rdf:resource="#IEC61970CIMVersion"/>
-		<cims:dataType rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-		<cims:multiplicity rdf:resource="http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1"/>
-		<cims:stereotype rdf:resource="http://langdale.com.au/2005/UML#attribute"/>
+		<rdfs:label>FeedingSubstation</rdfs:label>
+		<rdfs:domain rdf:resource="#Feeder"/>
+		<rdfs:range rdf:resource="#Substation"/>
+		<cims:multiplicity rdf:resource="http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:0..1"/>
+		<cims:inverseRoleName rdf:resource="#Substation.SubstationFeeder"/>
 	</rdf:Description>
 	<rdf:Description rdf:about="#IdentifiedObject">
 		<rdf:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Class"/>
@@ -650,6 +634,7 @@ A high voltage side, as given by TransformerEnd.endNumber, shall have a ratedU t
 		<rdfs:label>Substation</rdfs:label>
 		<rdfs:comment>A collection of equipment for purposes other than generation or utilization, through which electric energy in bulk is passed for the purposes of switching or modifying its characteristics.</rdfs:comment>
 		<cims:belongsToCategory rdf:resource="#Package_Core"/>
+		<rdfs:subClassOf rdf:resource="#PowerSystemResource"/>
 	</rdf:Description>
 	<rdf:Description rdf:about="#Substation.SubstationFeeder">
 		<rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"/>
@@ -657,6 +642,7 @@ A high voltage side, as given by TransformerEnd.endNumber, shall have a ratedU t
 		<rdfs:domain rdf:resource="#Substation"/>
 		<rdfs:range rdf:resource="#Feeder"/>
 		<cims:multiplicity rdf:resource="http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:0..n"/>
+		<cims:inverseRoleName rdf:resource="#Feeder.FeedingSubstation"/>
 	</rdf:Description>
 	<rdf:Description rdf:about="#Susceptance">
 		<rdf:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Class"/>
@@ -754,6 +740,11 @@ A high voltage side, as given by TransformerEnd.endNumber, shall have a ratedU t
 		<cims:belongsToCategory rdf:resource="#Package_Domain"/>
 		<cims:stereotype rdf:resource="http://langdale.com.au/2005/UML#enumeration"/>
 	</rdf:Description>
+	<rdf:Description rdf:about="#UnitMultiplier.E">
+		<rdf:type rdf:resource="#UnitMultiplier"/>
+		<rdfs:label>E</rdfs:label>
+		<rdfs:comment>Exa 10**18.</rdfs:comment>
+	</rdf:Description>
 	<rdf:Description rdf:about="#UnitMultiplier.G">
 		<rdf:type rdf:resource="#UnitMultiplier"/>
 		<rdfs:label>G</rdfs:label>
@@ -763,6 +754,56 @@ A high voltage side, as given by TransformerEnd.endNumber, shall have a ratedU t
 		<rdf:type rdf:resource="#UnitMultiplier"/>
 		<rdfs:label>M</rdfs:label>
 		<rdfs:comment>Mega 10**6.</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitMultiplier.P">
+		<rdf:type rdf:resource="#UnitMultiplier"/>
+		<rdfs:label>P</rdfs:label>
+		<rdfs:comment>Peta 10**15</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitMultiplier.T">
+		<rdf:type rdf:resource="#UnitMultiplier"/>
+		<rdfs:label>T</rdfs:label>
+		<rdfs:comment>Tera 10**12.</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitMultiplier.Y">
+		<rdf:type rdf:resource="#UnitMultiplier"/>
+		<rdfs:label>Y</rdfs:label>
+		<rdfs:comment>Yotta 10**24</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitMultiplier.Z">
+		<rdf:type rdf:resource="#UnitMultiplier"/>
+		<rdfs:label>Z</rdfs:label>
+		<rdfs:comment>Zetta 10**21</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitMultiplier.a">
+		<rdf:type rdf:resource="#UnitMultiplier"/>
+		<rdfs:label>a</rdfs:label>
+		<rdfs:comment>atto 10**-18.</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitMultiplier.c">
+		<rdf:type rdf:resource="#UnitMultiplier"/>
+		<rdfs:label>c</rdfs:label>
+		<rdfs:comment>Centi 10**-2.</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitMultiplier.d">
+		<rdf:type rdf:resource="#UnitMultiplier"/>
+		<rdfs:label>d</rdfs:label>
+		<rdfs:comment>Deci 10**-1.</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitMultiplier.da">
+		<rdf:type rdf:resource="#UnitMultiplier"/>
+		<rdfs:label>da</rdfs:label>
+		<rdfs:comment>deca 10**1.</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitMultiplier.f">
+		<rdf:type rdf:resource="#UnitMultiplier"/>
+		<rdfs:label>f</rdfs:label>
+		<rdfs:comment>femto 10**-15.</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitMultiplier.h">
+		<rdf:type rdf:resource="#UnitMultiplier"/>
+		<rdfs:label>h</rdfs:label>
+		<rdfs:comment>hecto 10**2.</rdfs:comment>
 	</rdf:Description>
 	<rdf:Description rdf:about="#UnitMultiplier.k">
 		<rdf:type rdf:resource="#UnitMultiplier"/>
@@ -779,10 +820,37 @@ A high voltage side, as given by TransformerEnd.endNumber, shall have a ratedU t
 		<rdfs:label>micro</rdfs:label>
 		<rdfs:comment>Micro 10**-6.</rdfs:comment>
 	</rdf:Description>
+	<rdf:Description rdf:about="#UnitMultiplier.n">
+		<rdf:type rdf:resource="#UnitMultiplier"/>
+		<rdfs:label>n</rdfs:label>
+		<rdfs:comment>Nano 10**-9.</rdfs:comment>
+	</rdf:Description>
 	<rdf:Description rdf:about="#UnitMultiplier.none">
 		<rdf:type rdf:resource="#UnitMultiplier"/>
 		<rdfs:label>none</rdfs:label>
 		<rdfs:comment>No multiplier or equivalently multiply by 1.</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitMultiplier.p">
+		<rdf:type rdf:resource="#UnitMultiplier"/>
+		<rdfs:label>p</rdfs:label>
+		<rdfs:comment>Pico 10**-12.</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitMultiplier.y">
+		<rdf:type rdf:resource="#UnitMultiplier"/>
+		<rdfs:label>y</rdfs:label>
+		<rdfs:comment>yocto 10**-24.</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitMultiplier.z">
+		<rdf:type rdf:resource="#UnitMultiplier"/>
+		<rdfs:label>z</rdfs:label>
+		<rdfs:comment>zepto 10**-21.</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitMultiplier">
+		<rdf:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Class"/>
+		<rdfs:label>UnitMultiplier</rdfs:label>
+		<rdfs:comment>The unit multipliers defined for the CIM.  When applied to unit symbols that already contain a multiplier, both multipliers are used. For example, to exchange kilograms using unit symbol of kg, one uses the "none" multiplier, to exchange metric ton (Mg), one uses the "k" multiplier.</rdfs:comment>
+		<cims:belongsToCategory rdf:resource="#Package_Domain"/>
+		<cims:stereotype rdf:resource="http://langdale.com.au/2005/UML#enumeration"/>
 	</rdf:Description>
 	<rdf:Description rdf:about="#UnitSymbol">
 		<rdf:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Class"/>
@@ -791,10 +859,25 @@ A high voltage side, as given by TransformerEnd.endNumber, shall have a ratedU t
 		<cims:belongsToCategory rdf:resource="#Package_Domain"/>
 		<cims:stereotype rdf:resource="http://langdale.com.au/2005/UML#enumeration"/>
 	</rdf:Description>
+	<rdf:Description rdf:about="#UnitSymbol.A">
+		<rdf:type rdf:resource="#UnitSymbol"/>
+		<rdfs:label>A</rdfs:label>
+		<rdfs:comment>Current in Ampere.</rdfs:comment>
+	</rdf:Description>
 	<rdf:Description rdf:about="#UnitSymbol.S">
 		<rdf:type rdf:resource="#UnitSymbol"/>
 		<rdfs:label>S</rdfs:label>
 		<rdfs:comment>Conductance in Siemens.</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitSymbol.V">
+		<rdf:type rdf:resource="#UnitSymbol"/>
+		<rdfs:label>V</rdfs:label>
+		<rdfs:comment>Electric potential in Volt (W/A).</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitSymbol.VA">
+		<rdf:type rdf:resource="#UnitSymbol"/>
+		<rdfs:label>VA</rdfs:label>
+		<rdfs:comment>Apparent power in Volt Ampere (See also real power and reactive power.)</rdfs:comment>
 	</rdf:Description>
 	<rdf:Description rdf:about="#UnitSymbol.VAr">
 		<rdf:type rdf:resource="#UnitSymbol"/>
@@ -821,6 +904,13 @@ Note: Different meter designs use different methods to arrive at their results. 
 		<rdf:type rdf:resource="#UnitSymbol"/>
 		<rdfs:label>ohm</rdfs:label>
 		<rdfs:comment>Electric resistance in ohm (V/A).</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#UnitSymbol">
+		<rdf:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Class"/>
+		<rdfs:label>UnitSymbol</rdfs:label>
+		<rdfs:comment>The units defined for usage in the CIM.</rdfs:comment>
+		<cims:belongsToCategory rdf:resource="#Package_Domain"/>
+		<cims:stereotype rdf:resource="http://langdale.com.au/2005/UML#enumeration"/>
 	</rdf:Description>
 	<rdf:Description rdf:about="#Voltage">
 		<rdf:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Class"/>
@@ -885,40 +975,39 @@ Note: Different meter designs use different methods to arrive at their results. 
 		<rdfs:label>Zn</rdfs:label>
 		<rdfs:comment>ZigZag, with neutral brought out for grounding.</rdfs:comment>
 	</rdf:Description>
-	<rdf:Description rdf:about="#UnitMultiplier">
-		<rdf:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Class"/>
-		<rdfs:label>UnitMultiplier</rdfs:label>
-		<rdfs:comment>The unit multipliers defined for the CIM.  When applied to unit symbols that already contain a multiplier, both multipliers are used. For example, to exchange kilograms using unit symbol of kg, one uses the "none" multiplier, to exchange metric ton (Mg), one uses the "k" multiplier.</rdfs:comment>
-		<cims:belongsToCategory rdf:resource="#Package_Domain"/>
-		<cims:stereotype rdf:resource="http://langdale.com.au/2005/UML#enumeration"/>
-	</rdf:Description>
-	<rdf:Description rdf:about="#UnitSymbol">
-		<rdf:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Class"/>
-		<rdfs:label>UnitSymbol</rdfs:label>
-		<rdfs:comment>The units defined for usage in the CIM.</rdfs:comment>
-		<cims:belongsToCategory rdf:resource="#Package_Domain"/>
-		<cims:stereotype rdf:resource="http://langdale.com.au/2005/UML#enumeration"/>
-	</rdf:Description>
-	<rdf:Description rdf:about="#Package_Equivalents">
+	<rdf:Description rdf:about="#Package_DistributionNetwork">
 		<rdf:type rdf:resource="http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#ClassCategory"/>
-		<rdfs:label>Equivalents</rdfs:label>
-		<rdfs:comment>The equivalents package models equivalent networks.</rdfs:comment>
-		<cims:belongsToCategory rdf:resource="#Package_Base"/>
+		<rdfs:label>DistributionNetwork</rdfs:label>
+		<rdfs:comment>Toolbox: CIMEA</rdfs:comment>
 	</rdf:Description>
 	<rdf:Description rdf:about="#Package_IEC61970">
 		<rdf:type rdf:resource="http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#ClassCategory"/>
 		<rdfs:label>IEC61970</rdfs:label>
 		<rdfs:comment>Top package for IEC 61970.</rdfs:comment>
+		<cims:belongsToCategory rdf:resource="#Package_DistributionNetwork"/>
 	</rdf:Description>
 	<rdf:Description rdf:about="#Package_Base">
 		<rdf:type rdf:resource="http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#ClassCategory"/>
 		<rdfs:label>Base</rdfs:label>
 		<cims:belongsToCategory rdf:resource="#Package_IEC61970"/>
 	</rdf:Description>
-	<rdf:Description rdf:about="#Package_Wires">
+	<rdf:Description rdf:about="#Package_InfIEC61970">
 		<rdf:type rdf:resource="http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#ClassCategory"/>
-		<rdfs:label>Wires</rdfs:label>
-		<rdfs:comment>An extension to the Core and Topology package that models information on the electrical characteristics of Transmission and Distribution networks. This package is used by network applications such as State Estimation, Load Flow and Optimal Power Flow.</rdfs:comment>
+		<rdfs:label>InfIEC61970</rdfs:label>
+		<rdfs:comment>This package and its subpackages contain informative (unstable) elements of the model, expected to evolve a lot or to be removed, and not published as IEC document yet. Some portions of it will be reworked and moved to normative packages as the need arises, and some portions may be removed.
+WG13 does not generate documentation for this informative portion of the model.</rdfs:comment>
+		<cims:belongsToCategory rdf:resource="#Package_IEC61970"/>
+	</rdf:Description>
+	<rdf:Description rdf:about="#Package_Core">
+		<rdf:type rdf:resource="http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#ClassCategory"/>
+		<rdfs:label>Core</rdfs:label>
+		<rdfs:comment>Contains the core PowerSystemResource and ConductingEquipment entities shared by all applications plus common collections of those entities. Not all applications require all the Core entities.  This package does not depend on any other package except the Domain package, but most of the other packages have associations and generalizations that depend on it.</rdfs:comment>
+		<cims:belongsToCategory rdf:resource="#Package_Base"/>
+	</rdf:Description>
+	<rdf:Description rdf:about="#Package_Equivalents">
+		<rdf:type rdf:resource="http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#ClassCategory"/>
+		<rdfs:label>Equivalents</rdfs:label>
+		<rdfs:comment>The equivalents package models equivalent networks.</rdfs:comment>
 		<cims:belongsToCategory rdf:resource="#Package_Base"/>
 	</rdf:Description>
 	<rdf:Description rdf:about="#Package_Domain">
@@ -931,18 +1020,11 @@ Note: Different meter designs use different methods to arrive at their results. 
 &amp;lt;&amp;lt;Compound&amp;gt;&amp;gt; A composite of Primitive, enumeration, CIMDatatype or othe Compound classes, as long as the Compound classes do not recurse.</rdfs:comment>
 		<cims:belongsToCategory rdf:resource="#Package_Base"/>
 	</rdf:Description>
-	<rdf:Description rdf:about="#Package_Core">
+	<rdf:Description rdf:about="#Package_Wires">
 		<rdf:type rdf:resource="http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#ClassCategory"/>
-		<rdfs:label>Core</rdfs:label>
-		<rdfs:comment>Contains the core PowerSystemResource and ConductingEquipment entities shared by all applications plus common collections of those entities. Not all applications require all the Core entities.  This package does not depend on any other package except the Domain package, but most of the other packages have associations and generalizations that depend on it.</rdfs:comment>
+		<rdfs:label>Wires</rdfs:label>
+		<rdfs:comment>An extension to the Core and Topology package that models information on the electrical characteristics of Transmission and Distribution networks. This package is used by network applications such as State Estimation, Load Flow and Optimal Power Flow.</rdfs:comment>
 		<cims:belongsToCategory rdf:resource="#Package_Base"/>
-	</rdf:Description>
-	<rdf:Description rdf:about="#Package_InfIEC61970">
-		<rdf:type rdf:resource="http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#ClassCategory"/>
-		<rdfs:label>InfIEC61970</rdfs:label>
-		<rdfs:comment>This package and its subpackages contain informative (unstable) elements of the model, expected to evolve a lot or to be removed, and not published as IEC document yet. Some portions of it will be reworked and moved to normative packages as the need arises, and some portions may be removed.
-WG13 does not generate documentation for this informative portion of the model.</rdfs:comment>
-		<cims:belongsToCategory rdf:resource="#Package_IEC61970"/>
 	</rdf:Description>
 	<rdf:Description rdf:about="#Package_Feeder">
 		<rdf:type rdf:resource="http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#ClassCategory"/>

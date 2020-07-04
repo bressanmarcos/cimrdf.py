@@ -67,7 +67,7 @@ def test_import_export():
 
 
 def test_recover_from_xml():
-    from output import EquivalentInjection, Terminal, Switch, ConnectivityNode, DocumentCIMRDF, fromstring
+    from output import EquivalentInjection, Terminal, Switch, ConnectivityNode, DocumentCIMRDF
 
     ei = EquivalentInjection()
     ei.IdentifiedObject_mRID = 'EquivalentNW243'
@@ -89,24 +89,29 @@ def test_recover_from_xml():
     cn.IdentifiedObject_mRID = 'Node23'
     cn.ConnectivityNode_Terminals = [t1, t]
 
-    new = DocumentCIMRDF([ei, t, s, t1, t2, cn])
+    doc1 = DocumentCIMRDF([ei, t, s, t1, t2, cn])
 
     # Print to stdout
-    # new.dump()
+    doc1.dump()
 
     ###################################################
     # Convert to string
-    string = new.tostring()
+    string = doc1.tostring()
 
     ###################################################
 
     # Agente 2 (receptor)
     # Read the string to recover instances
-    instances = fromstring(string)
-    # print(instances)
+    doc2 = DocumentCIMRDF()
+    doc2.fromstring(string)
+    instances = doc2.resources
 
-    renew = DocumentCIMRDF()
-    renew.add_elements(list(instances.values()))
+    # Print to stdout again for comparison
+    doc2.dump()
+
+    a = list(instances)
+    switches = list(filter(lambda x: isinstance(x, Switch), a))
+    print(switches)
 
     # Print to stdout again for comparison
     # renew.dump()

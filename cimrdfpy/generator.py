@@ -177,14 +177,8 @@ __CIMDATATYPE_URI = __UML_NS+'cimdatatype'
 '''
     TEXT += f"__BASE_NS = '{__BASE_NS}'"
     TEXT += '''
-def fromstring(xml):
-    etree = ET.fromstring(xml)
-    return __import(etree)
-def fromfile(filename):
-    etree = ET.parse(filename)
-    return __import(etree)
 
-def __import(etree):
+def _import(etree):
     def get_type(element):
         if element.tag == __DESCRIPTION_TAG:
             return element.find(__TYPE_TAG).attrib[__RESOURCE_ATTRIB].split('#')[1]
@@ -233,6 +227,7 @@ else:
 
     return classes'''          
     TEXT += f'''
+
 class DocumentCIMRDF():
     def __init__(self, resources = []):
         self.resources = []
@@ -258,6 +253,14 @@ class DocumentCIMRDF():
 
     def tostring(self):
         return ET.tostring(self.pack())
+
+    def fromstring(self, xml):
+        etree = ET.fromstring(xml)
+        self.resources = list(_import(etree).values())
+
+    def fromfile(self, filename):
+        etree = ET.parse(filename)
+        self.resources = list(_import(etree).values())
 
 class Enumeration:
     def __init__(self, value, allowed):

@@ -237,6 +237,8 @@ else:
     TEXT += f'''
 
 class DocumentCIMRDF():
+    PRIMITIVES = ({''.join(primitive+', ' for primitive in datatype.values())})
+
     def __init__(self, resources = []):
         self.resources = []
         for resource in resources:
@@ -245,7 +247,16 @@ class DocumentCIMRDF():
     def add_elements(self, elements: Union[ET.Element, List[ET.Element]]):
         elements = elements if isinstance(elements, list) else [elements]
         for element in elements:
-            self.resources.append(element)
+            if element not in self.resources:
+                self.resources.append(element)
+
+    def add_recursively(self, elements: Union[ET.Element, List[ET.Element]]):
+        elements = elements if isinstance(elements, list) else [elements]
+        for element in elements:
+            if element not in self.resources and element != None and all(not isinstance(element, primitive) for primitive in DocumentCIMRDF.PRIMITIVES) and not isinstance(element, Enumeration):
+                self.resources.append(element)
+                for intern_element in element.__dict__.values():
+                    self.add_recursively(intern_element)
 
     def dump(self):
         etree = self.pack()

@@ -133,9 +133,6 @@ def test_new_version_debug():
     substation_2 = Substation(IdentifiedObject_mRID='S2')
     substation_3 = Substation(IdentifiedObject_mRID='S3')
 
-    print (substation_1.Substation_SubstationFeeder is substation_1.Substation_SubstationFeeder)
-    print (substation_1.Substation_SubstationFeeder is substation_2.Substation_SubstationFeeder)
-
     feeder_1_s1 = Feeder(IdentifiedObject_mRID='S1_AL1', Feeder_FeedingSubstation=substation_1)
     feeder_2_s1 = Feeder(IdentifiedObject_mRID='S1_AL2', Feeder_FeedingSubstation=substation_1)
     feeder_3_s1 = Feeder(IdentifiedObject_mRID='S1_AL3', Feeder_FeedingSubstation=substation_1)
@@ -151,4 +148,24 @@ def test_new_version_debug():
 
     doc.dump()
 
-# test_new_version_debug()
+    assert (substation_1.Substation_SubstationFeeder is substation_1.Substation_SubstationFeeder)
+    assert not (substation_1.Substation_SubstationFeeder is substation_2.Substation_SubstationFeeder)
+
+def test_recursive_add():
+    from output import Length, Decimal, BusbarSection, ACLineSegment, Terminal, Resistance, ConnectivityNode, UnitMultiplier, UnitSymbol, Reactance, DocumentCIMRDF
+
+    d = DocumentCIMRDF()
+    b = BusbarSection(
+        IdentifiedObject_mRID='sad', 
+        ConductingEquipment_Terminals=[
+            Terminal(
+                Terminal_sequenceNumber=2, 
+                Terminal_ConnectivityNode=ConnectivityNode(
+                    IdentifiedObject_mRID='CN'))])
+    a = ACLineSegment(IdentifiedObject_mRID='id', ACLineSegment_r=Resistance(UnitMultiplier('k'), UnitSymbol('ohm'), Decimal('123')), ACLineSegment_x=Reactance(UnitMultiplier('k'), UnitSymbol('ohm'), Decimal('123')), ACLineSegment_x0=Reactance(UnitMultiplier('k'), UnitSymbol('ohm'), Decimal('123')), ACLineSegment_r0=Resistance(UnitMultiplier('k'), UnitSymbol('ohm'), Decimal('123')))
+    a.Conductor_length = Length(UnitMultiplier('none'), UnitSymbol('m'), Decimal('2342234.2342'))
+    d.add_recursively([b, a])
+
+    d.dump()
+
+# test_recursive_add()

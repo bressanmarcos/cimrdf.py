@@ -58,8 +58,8 @@ def test_import_export():
     from xml.etree import ElementTree as ET
     bv = BaseVoltage()
     v = Voltage()
-    v.Voltage_multiplier = UnitMultiplier(UnitMultiplier.K)
-    v.Voltage_unit = UnitSymbol(UnitSymbol.NONE)
+    v.Voltage_multiplier = UnitMultiplier(UnitMultiplier.k)
+    v.Voltage_unit = UnitSymbol(UnitSymbol.V)
     v.Voltage_value = '2.001'
     bv.BaseVoltage_nominalVoltage = v
     document = DocumentCIMRDF([v, bv])
@@ -167,5 +167,8 @@ def test_recursive_add():
     d.add_recursively([b, a])
 
     d.dump()
+
+    assert all(any(isinstance(obj, dtype) for obj in d.resources) for dtype in (Length, BusbarSection, Terminal, ConnectivityNode, Resistance, Reactance))
+    assert all(all(not isinstance(obj, dtype) for dtype in (UnitMultiplier, UnitSymbol, Decimal)) for obj in d.resources)
 
 # test_recursive_add()

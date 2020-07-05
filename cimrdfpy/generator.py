@@ -97,8 +97,11 @@ def main():
         filt = filter(lambda resource: resource.find(__DOMAIN_TAG).attrib[__RESOURCE_ATTRIB].split('#')[1] == domain, filt)
         return filt
 
-    def get_property_multiplicity(element):
-        return prop.find(__MULTIPLICITY_TAG).attrib[__RESOURCE_ATTRIB].split('#M:')[1]
+    def get_property_multiplicity(prop):
+        multiplicity_tag = prop.find(__MULTIPLICITY_TAG)
+        if multiplicity_tag != None:
+            return multiplicity_tag.attrib[__RESOURCE_ATTRIB].split('#M:')[1]
+        return '1..1'
 
     def get_superclass(element):
         superclass_tag = element.find(__SUBCLASSOF_TAG)
@@ -127,16 +130,16 @@ def main():
             properties = get_properties_by_domain(label)
             for prop in properties:
                 prop_id = get_resource_id(prop)
-                prop_obj = {}
+                classes[label]['properties'][prop_id] = {}
+                prop_obj = classes[label]['properties'][prop_id]
                 prop_obj['multiplicity'] = get_property_multiplicity(prop)
                 prop_obj['inverseRoleName'] = get_property_inverse_role_name(prop)
                 if prop.find(__RANGE_TAG) != None:
                     prop_obj['type'] = prop.find(__RANGE_TAG).attrib[__RESOURCE_ATTRIB].split('#')[1]
                 elif prop.find(__DATATYPE_TAG) != None:
                     prop_obj['type'] = prop.find(__DATATYPE_TAG).attrib[__RESOURCE_ATTRIB].split('#')[1]
-                classes[label]['properties'][prop_id] = prop_obj
     
-    # Define all super properties
+    # Define all super properties (all class' and its parents' properties)
     for class_name, class_detail in classes.items():
         classes[class_name]['superproperties'] = {}
         current_node = class_name
@@ -144,6 +147,32 @@ def main():
             classes[class_name]['superproperties'].update(classes[current_node]['properties'])
             current_node = classes[current_node]['super']
     
+    def class_iterator(classes):
+        def tree_sort(classes):
+            names = []
+            while len(names) != len(classes):
+                for _class in classes:
+                    if _class not in names and (classes[_class]['super'] == '' or classes[_class]['super'] in names):
+                        names.append(_class)
+            return names
+        sorted_classes = tree_sort(classes)
+        return [(class_name, classes[class_name]) for class_name in sorted_classes]
+
+    def property_iterator(properties):
+        for prop_name in properties:
+            new_property = properties[prop_name]
+            dtype = new_property['type'] if new_property['type'] not in datatype else datatype[new_property['type']]
+            inverseRoleName = new_property['inverseRoleName']
+            if '..' in new_property['multiplicity']:
+                minBound, maxBound = new_property['multiplicity'].split('..')
+                minBound = int(minBound)
+                maxBound = float('Inf') if maxBound == 'n' else int(maxBound)
+            elif new_property['multiplicity'] == 'n':
+                minBound, maxBound = 0, float('Inf')
+            else:
+                minBound, maxBound = 2 * [int(new_property['multiplicity'])]
+            yield (prop_name.replace(".", "_"), dtype.replace(".", "_"), inverseRoleName and inverseRoleName.replace(".", "_"), minBound, maxBound)
+
     TEXT = '''from decimal import Decimal
 from enum import Enum
 from typing import List, Union
@@ -292,44 +321,22 @@ class {enum_name}(str, Enum):'''
     {enum_value} = '{enum_value}' '''
         TEXT += '\n'
 
-    def class_iter(classes):
-        def tree_sort(classes):
-            names = []
-            while len(names) != len(classes):
-                for _class in classes:
-                    if _class not in names and (classes[_class]['super'] == '' or classes[_class]['super'] in names):
-                        names.append(_class)
-            return names
-        sorted_classes = tree_sort(classes)
-        for class_name in sorted_classes:
-            yield class_name, classes[class_name]
+    class_iter = class_iterator(classes)
 
-    def property_iter(properties):
-        for prop_name in properties:
-            new_property = properties[prop_name]
-            dtype = new_property['type'] if new_property['type'] not in datatype else datatype[new_property['type']]
-            inverseRoleName = new_property['inverseRoleName']
-            if '..' in new_property['multiplicity']:
-                minBound, maxBound = new_property['multiplicity'].split('..')
-                minBound = int(minBound)
-                maxBound = float('Inf') if maxBound == 'n' else int(maxBound)
-            elif new_property['multiplicity'] == 'n':
-                minBound, maxBound = 0, float('Inf')
-            else:
-                minBound, maxBound = 2 * [int(new_property['multiplicity'])]
-            yield (prop_name.replace(".", "_"), dtype.replace(".", "_"), inverseRoleName and inverseRoleName.replace(".", "_"), minBound, maxBound)
+    for class_name, class_detail in class_iter:
+        property_iter = list(property_iterator(class_detail['properties']))
+        superproperty_iter = list(property_iterator(class_detail['superproperties']))
 
-    for class_name, class_detail in class_iter(classes):
         # Class __init__
         TEXT += f''' 
 class {class_name}({class_detail['super']}):
     def __init__(self'''
 
         # Constructor attributes
-        for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter(class_detail['superproperties']):
+        for prop_name, dtype, inverseRoleName, minBound, maxBound in superproperty_iter:
             if maxBound < 2:
                 TEXT += f''', {prop_name}: {dtype if dtype in datatype.values() else f"'{dtype}'"} = None'''
-            else:
+            elif maxBound >= 2:
                 TEXT += f''', {prop_name}: List[{dtype if dtype in datatype.values() else f"'{dtype}'"}] = None'''
         TEXT += '):'
 
@@ -339,22 +346,23 @@ class {class_name}({class_detail['super']}):
         super().__init__('''
 
             # Super call attributes
-            for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter(classes[class_detail['super']]['superproperties']):
+            for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iterator(classes[class_detail['super']]['superproperties']):
                 TEXT += f'''{prop_name} = {prop_name}, '''
             TEXT += ')'
 
         # URI generate URI
-        else:
+        if not class_detail['super']:
             TEXT += f'''
         self.URI = '#' + str(uuid())'''
 
         # List instance attributes
-        for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter(class_detail['properties']):
+        for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter:
             TEXT += f'''
         self.{prop_name} = {prop_name}'''
 
         # Define Properties
-        for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter(class_detail['properties']):
+        for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter:
+
             if maxBound < 2:
                 TEXT += f'''
     @property
@@ -420,7 +428,7 @@ class {class_name}({class_detail['super']}):
         root = ET.Element('{'{'+__BASE_NS+'}'}{class_name}', attrib={"{'{"+__RDF_NS+"}about': self.URI}"})'''
         
         
-        for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter(class_detail['properties']):
+        for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter:
 
             if maxBound < 2:  # If it is a unique object
 
@@ -484,7 +492,7 @@ class {class_name}({class_detail['super']}):
         {'super().validate()' if class_detail['super'] else ''}'''
         #<<<<<<<<<<<<<<<<<<<<<<
         
-        for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter(class_detail['properties']):
+        for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter:
 
             if maxBound < 2:
                 #>>>>>>>>>>>>>>>>>>>>>>

@@ -50,7 +50,6 @@ def is_enumeration(element):
         element.find(__STEREOTYPE_TAG) != None and \
         element.find(__STEREOTYPE_TAG).attrib[__RESOURCE_ATTRIB] == __ENUMERATION_URI
 
-
 def is_cimdatatype(element):
     return is_class(element) and \
         element.find(__STEREOTYPE_TAG) != None and \
@@ -108,6 +107,12 @@ def main():
         if superclass_tag != None:
             return superclass_tag.attrib[__RESOURCE_ATTRIB].split('#')[1]
         return ''
+
+    def get_comments(element):
+        comment_tag = element.find(__COMMENT_TAG)
+        if comment_tag != None:
+            return comment_tag.text
+        return ''
         
     def get_property_inverse_role_name(prop):
         return prop.find(__INVERSEROLE_TAG).attrib[__RESOURCE_ATTRIB].split('#')[1] if prop.find(__INVERSEROLE_TAG) != None else None
@@ -118,20 +123,24 @@ def main():
     for entry in root:
         if is_enumeration(entry):
             label = get_resource_label(entry)
+            enumerations[label] = {}
             # capture resources that are of this type
             resources = get_resources_by_type(label)
-            enumeration_set = list(map(lambda resource: get_resource_label(resource), resources))
-            enumerations[label] = enumeration_set
+            enumeration_set = map(lambda resource: (get_resource_label(resource), get_comments(resource)), resources)
+            enumerations[label]['set'] = {value: {'comments': comments.replace('\n', ' ').replace('\r', '')} for (value, comments) in enumeration_set}
+            enumerations[label]['comments'] = get_comments(entry)
         elif is_class(entry):
             label = get_resource_label(entry)
             classes[label] = {}
             classes[label]['super'] = get_superclass(entry) 
+            classes[label]['comments'] = get_comments(entry)
             classes[label]['properties'] = {}
             properties = get_properties_by_domain(label)
             for prop in properties:
                 prop_id = get_resource_id(prop)
                 classes[label]['properties'][prop_id] = {}
                 prop_obj = classes[label]['properties'][prop_id]
+                prop_obj['comments'] = get_comments(prop)
                 prop_obj['multiplicity'] = get_property_multiplicity(prop)
                 prop_obj['inverseRoleName'] = get_property_inverse_role_name(prop)
                 if prop.find(__RANGE_TAG) != None:
@@ -162,6 +171,7 @@ def main():
         for prop_name in properties:
             new_property = properties[prop_name]
             dtype = new_property['type'] if new_property['type'] not in datatype else datatype[new_property['type']]
+            comments = new_property['comments']
             inverseRoleName = new_property['inverseRoleName']
             if '..' in new_property['multiplicity']:
                 minBound, maxBound = new_property['multiplicity'].split('..')
@@ -171,7 +181,7 @@ def main():
                 minBound, maxBound = 0, float('Inf')
             else:
                 minBound, maxBound = 2 * [int(new_property['multiplicity'])]
-            yield (prop_name.replace(".", "_"), dtype.replace(".", "_"), inverseRoleName and inverseRoleName.replace(".", "_"), minBound, maxBound)
+            yield (prop_name.replace(".", "_"), dtype.replace(".", "_"), inverseRoleName and inverseRoleName.replace(".", "_"), minBound, maxBound, comments)
 
     TEXT = '''from decimal import Decimal
 from enum import Enum
@@ -267,7 +277,7 @@ else:
 '''      
     TEXT += f'''
 class DocumentCIMRDF():
-    PRIMITIVES = ({''.join(primitive+', ' for primitive in datatype.values())})
+    PRIMITIVES = ({', '.join(primitive for primitive in datatype.values())})
 
     def __init__(self, resources = []):
         self.resources = []
@@ -313,12 +323,13 @@ class DocumentCIMRDF():
 
 '''
 
-    for enum_name, enum_set in enumerations.items():
+    for enum in enumerations:
         TEXT += f'''
-class {enum_name}(str, Enum):'''
-        for enum_value in enum_set:
+class {enum}(str, Enum):
+    """{enumerations[enum]['comments']}"""'''
+        for enum_value in enumerations[enum]['set']:
             TEXT += f'''
-    {enum_value} = '{enum_value}' '''
+    {enum_value} = '{enum_value}' # {enumerations[enum]['set'][enum_value]['comments']} '''
         TEXT += '\n'
 
     class_iter = class_iterator(classes)
@@ -330,10 +341,11 @@ class {enum_name}(str, Enum):'''
         # Class __init__
         TEXT += f''' 
 class {class_name}({class_detail['super']}):
+    """{class_detail['comments']}"""
     def __init__(self'''
 
         # Constructor attributes
-        for prop_name, dtype, inverseRoleName, minBound, maxBound in superproperty_iter:
+        for prop_name, dtype, inverseRoleName, minBound, maxBound, comments in superproperty_iter:
             if maxBound < 2:
                 TEXT += f''', {prop_name}: {dtype if dtype in datatype.values() else f"'{dtype}'"} = None'''
             elif maxBound >= 2:
@@ -346,7 +358,7 @@ class {class_name}({class_detail['super']}):
         super().__init__('''
 
             # Super call attributes
-            for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iterator(classes[class_detail['super']]['superproperties']):
+            for prop_name, dtype, inverseRoleName, minBound, maxBound, comments in property_iterator(classes[class_detail['super']]['superproperties']):
                 TEXT += f'''{prop_name} = {prop_name}, '''
             TEXT += ')'
 
@@ -356,17 +368,18 @@ class {class_name}({class_detail['super']}):
         self.URI = '#' + str(uuid())'''
 
         # List instance attributes
-        for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter:
+        for prop_name, dtype, inverseRoleName, minBound, maxBound, comments in property_iter:
             TEXT += f'''
         self.{prop_name} = {prop_name}'''
 
         # Define Properties
-        for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter:
+        for prop_name, dtype, inverseRoleName, minBound, maxBound, comments in property_iter:
 
             if maxBound < 2:
                 TEXT += f'''
     @property
     def {prop_name}(self) -> {dtype if dtype in datatype.values() else f"'{dtype}'"}:
+        """{comments}"""
         return self.__{prop_name}
     @{prop_name}.setter
     def {prop_name}(self, value: {dtype if dtype in datatype.values() else f"'{dtype}'"}):
@@ -428,7 +441,7 @@ class {class_name}({class_detail['super']}):
         root = ET.Element('{'{'+__BASE_NS+'}'}{class_name}', attrib={"{'{"+__RDF_NS+"}about': self.URI}"})'''
         
         
-        for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter:
+        for prop_name, dtype, inverseRoleName, minBound, maxBound, comments in property_iter:
 
             if maxBound < 2:  # If it is a unique object
 
@@ -492,7 +505,7 @@ class {class_name}({class_detail['super']}):
         {'super().validate()' if class_detail['super'] else ''}'''
         #<<<<<<<<<<<<<<<<<<<<<<
         
-        for prop_name, dtype, inverseRoleName, minBound, maxBound in property_iter:
+        for prop_name, dtype, inverseRoleName, minBound, maxBound, comments in property_iter:
 
             if maxBound < 2:
                 #>>>>>>>>>>>>>>>>>>>>>>

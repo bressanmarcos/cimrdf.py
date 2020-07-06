@@ -494,18 +494,16 @@ class {class_name}({class_detail['super']}):
                 else: # if it is a complex type
                     TEXT += f'''
                 ET.SubElement(root, '{'{'+__BASE_NS+'}'}{prop_name.replace('_','.')}', attrib={"{'{" +__RDF_NS+"}"}resource': item.URI{'}'})'''
-        
-        
-        
-        TEXT += f'''
-        return root
-    '''
+        TEXT += '''
+        return root'''
+    
+
         # VALIDATION
-        #>>>>>>>>>>>>>>>>>>>>>>
-        TEXT += f'''
-    def validate(self):
-        {'super().validate()' if class_detail['super'] else ''}'''
-        #<<<<<<<<<<<<<<<<<<<<<<
+
+        TEXT += '''
+    def validate(self):'''
+        TEXT += '''
+        super().validate()''' if class_detail['super'] else ''
         
         for prop_name, dtype, inverseRoleName, minBound, maxBound, comments in property_iter:
 

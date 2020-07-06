@@ -171,4 +171,21 @@ def test_recursive_add():
     assert all(any(isinstance(obj, dtype) for obj in d.resources) for dtype in (Length, BusbarSection, Terminal, ConnectivityNode, Resistance, Reactance))
     assert all(all(not isinstance(obj, dtype) for dtype in (UnitMultiplier, UnitSymbol, Decimal)) for obj in d.resources)
 
-# test_recursive_add()
+def write_to_file():
+    from output import Length, Decimal, BusbarSection, ACLineSegment, Terminal, Resistance, ConnectivityNode, UnitMultiplier, UnitSymbol, Reactance, DocumentCIMRDF
+
+    d = DocumentCIMRDF()
+    b = BusbarSection(
+        IdentifiedObject_mRID='sad', 
+        ConductingEquipment_Terminals=[
+            Terminal(
+                Terminal_sequenceNumber=2, 
+                Terminal_ConnectivityNode=ConnectivityNode(
+                    IdentifiedObject_mRID='CN'))])
+    a = ACLineSegment(IdentifiedObject_mRID='id', ACLineSegment_r=Resistance(UnitMultiplier('k'), UnitSymbol('ohm'), Decimal('123')), ACLineSegment_x=Reactance(UnitMultiplier('k'), UnitSymbol('ohm'), Decimal('123')), ACLineSegment_x0=Reactance(UnitMultiplier('k'), UnitSymbol('ohm'), Decimal('123')), ACLineSegment_r0=Resistance(UnitMultiplier('k'), UnitSymbol('ohm'), Decimal('123')))
+    a.Conductor_length = Length(UnitMultiplier('none'), UnitSymbol('m'), Decimal('2342234.2342'))
+    d.add_recursively([b, a])
+
+    d.dump()
+
+    d.tofile('output.xml')

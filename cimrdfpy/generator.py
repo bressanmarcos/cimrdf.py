@@ -317,6 +317,9 @@ class DocumentCIMRDF():
         etree = ET.fromstring(xml)
         self.resources = list(_import(etree).values())
 
+    def tofile(self, filename):
+        ET.ElementTree(self.pack()).write(filename)
+
     def fromfile(self, filename):
         etree = ET.parse(filename)
         self.resources = list(_import(etree).values())

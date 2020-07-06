@@ -181,7 +181,7 @@ def main():
                 minBound, maxBound = 0, float('Inf')
             else:
                 minBound, maxBound = 2 * [int(new_property['multiplicity'])]
-            yield (prop_name.replace(".", "_"), dtype.replace(".", "_"), inverseRoleName and inverseRoleName.replace(".", "_"), minBound, maxBound, comments)
+            yield (prop_name.replace(".", "_"), dtype.replace(".", "_"), inverseRoleName and inverseRoleName.replace(".", "_"), minBound, maxBound, comments.replace("\n", " "))
 
     TEXT = '''from decimal import Decimal
 from enum import Enum
@@ -369,6 +369,9 @@ class {class_name}({class_detail['super']}):
 
         # List instance attributes
         for prop_name, dtype, inverseRoleName, minBound, maxBound, comments in property_iter:
+
+            TEXT += f'''
+        # {comments} ''' if comments else ''
             TEXT += f'''
         self.{prop_name} = {prop_name}'''
 
@@ -379,7 +382,6 @@ class {class_name}({class_detail['super']}):
                 TEXT += f'''
     @property
     def {prop_name}(self) -> {dtype if dtype in datatype.values() else f"'{dtype}'"}:
-        """{comments}"""
         return self.__{prop_name}
     @{prop_name}.setter
     def {prop_name}(self, value: {dtype if dtype in datatype.values() else f"'{dtype}'"}):

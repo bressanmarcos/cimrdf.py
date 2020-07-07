@@ -226,7 +226,7 @@ __CIMDATATYPE_URI = __UML_NS+'cimdatatype'
     TEXT += f"__BASE_NS = '{__BASE_NS}'"
     TEXT += '''
 
-def _import(etree):
+def _import(root):
     def get_type(element):
         if element.tag == __DESCRIPTION_TAG:
             return element.find(__TYPE_TAG).attrib[__RESOURCE_ATTRIB].split('#')[1]
@@ -237,43 +237,39 @@ def _import(etree):
         except:
             return __BASE_NS.replace('#','') + element.attrib[__ABOUT_ATTRIB]
 
-    root = etree
-    classes = {}
+    instances_dict = {}
 
     try:
         __BASE_NS = root.attrib[__XML_BASE].replace('#', '') + '#'
     except:
         __BASE_NS = ''
 
+    # Instance resouces and set URI
     for child in root:
-        new_class = get_type(child)
+        resource_type = get_type(child)
         uri = '#' + get_element_URI(child).split('#')[1]
-        classes[uri] = eval(new_class + '()')
-        classes[uri].URI = uri
+        instances_dict[uri] = eval(f'{resource_type}()')
+        instances_dict[uri].URI = uri
 
+    # Set resources attributes
     for child in root:
         uri = '#' + get_element_URI(child).split('#')[1]
-        element = classes[uri]
-        for attribute in child:
-            dtype = get_type(attribute).replace('.', '_')
-            if __RESOURCE_ATTRIB in attribute.attrib:
-                resource_uri = attribute.attrib[__RESOURCE_ATTRIB]
-                exec(f"""
-if isinstance(element.{dtype}, list):
-   element.add_{dtype}(classes[resource_uri])
-else:
-   element.{dtype} = classes[resource_uri]
-""")
+        instance = instances_dict[uri]
+        for resource_item in child:
+            dtype = get_type(resource_item).replace('.', '_')
+            instance_attribute = getattr(instance, dtype)
+            if __RESOURCE_ATTRIB in resource_item.attrib:
+                referenced_resource_uri = resource_item.attrib[__RESOURCE_ATTRIB]
+                value = instances_dict[referenced_resource_uri]
             else:
-                value = attribute.text
-                exec(f"""
-if isinstance(element.{dtype}, list):
-    element.add_{dtype}(value)
-else:
-    element.{dtype} = value
-""")
+                value = resource_item.text
+            if isinstance(instance_attribute, list):
+                add_method = getattr(instance, f'add_{dtype}')
+                add_method(value)
+            else:
+                setattr(instance, dtype, value)
 
-    return classes
+    return instances_dict
 '''      
     TEXT += f'''
 class DocumentCIMRDF():
@@ -299,8 +295,7 @@ class DocumentCIMRDF():
                     self.add_recursively(intern_element)
 
     def dump(self):
-        etree = self.pack()
-        rough_string = ET.tostring(etree, 'utf-8')
+        rough_string = self.tostring()
         reparsed = parseString(rough_string)
         print(reparsed.toprettyxml(indent=' '*4))
     
@@ -308,21 +303,23 @@ class DocumentCIMRDF():
         root = ET.Element('{'{'+__RDF_NS+'}'}RDF', attrib={"{'"+__XML_BASE+"': '"+__BASE_NS.replace('#','')+"/new_resource#'}"})
         for element in self.resources:
             root.append(element.serialize())
-        return root
+        return ET.ElementTree(root)
 
     def tostring(self):
-        return ET.tostring(self.pack())
+        root = self.pack().getroot()
+        return ET.tostring(root)
 
     def fromstring(self, xml):
-        etree = ET.fromstring(xml)
-        self.resources = list(_import(etree).values())
+        root = ET.fromstring(xml)
+        self.resources = list(_import(root).values())
 
     def tofile(self, filename):
-        ET.ElementTree(self.pack()).write(filename)
+        etree = self.pack()
+        etree.write(filename)
 
     def fromfile(self, filename):
-        etree = ET.parse(filename)
-        self.resources = list(_import(etree).values())
+        root = ET.parse(filename).getroot()
+        self.resources = list(_import(root).values())
 
 '''
 
@@ -381,6 +378,7 @@ class {class_name}({class_detail['super']}):
         # Define Properties
         for prop_name, dtype, inverseRoleName, minBound, maxBound, comments in property_iter:
 
+            # For non list properties
             if maxBound < 2:
                 TEXT += f'''
     @property
@@ -390,22 +388,59 @@ class {class_name}({class_detail['super']}):
     def {prop_name}(self, value: {dtype if dtype in datatype.values() else f"'{dtype}'"}):
         if value == None:
             self.__{prop_name} = None
-        elif not hasattr(self, '{prop_name}') or not self.{prop_name} is value:
-            self.__{prop_name} = {dtype+'(value)' if dtype in ['str', 'int', 'Decimal'] else ('str(value).lower() == "true"' if dtype in ['bool'] else 'value')}'''
+        elif not hasattr(self, '{prop_name}') or not self.{prop_name} is value:'''
+
+                # Boolean type
+                if dtype == 'bool':
+                    TEXT += f'''
+            self.__{prop_name} = str(value).lower() == 'true' '''
+                # Other primitives
+                elif dtype in datatype.values():
+                    TEXT += f'''
+            self.__{prop_name} = {dtype}(value)'''
+                # Enumerations
+                elif dtype in enumerations:
+                    TEXT += f'''
+            self.__{prop_name} = {dtype}(value)'''
+                # Complex values
+                else:
+                    TEXT += f'''
+            self.__{prop_name} = value'''
+                
+                # Set inverse attribute if it exists
                 if inverseRoleName:
                     TEXT += f'''
             if isinstance(value.{inverseRoleName}, list):
                 value.add_{inverseRoleName}(self)
             else:
                 value.{inverseRoleName} = self'''
-            
+
+            # For lists
             elif maxBound >= 2:
                 TEXT += f'''
     def add_{prop_name}(self, value: {dtype if dtype in datatype.values() else f"'{dtype}'"}):
-        if self.__{prop_name} is None:
+        if not hasattr(self, '{prop_name}'):
             self.__{prop_name} = []
-        if value not in self.__{prop_name}:
+        if value not in self.__{prop_name}:'''
+
+                # Boolean type
+                if dtype == 'bool':
+                    TEXT += f'''
+            self.__{prop_name}.append(str(value).lower() == 'true')'''
+                # Other primitives
+                elif dtype in datatype.values():
+                    TEXT += f'''
+            self.__{prop_name}.append({dtype}(value))'''
+                # Enumerations
+                elif dtype in enumerations:
+                    TEXT += f'''
+            self.__{prop_name}.append({dtype}(value))'''
+                # Complex values
+                else:
+                    TEXT += f'''
             self.__{prop_name}.append(value)'''
+
+                # Set inverse attribute if it exists
                 if inverseRoleName:
                     TEXT += f'''
             if isinstance(value.{inverseRoleName}, list):
@@ -420,11 +455,14 @@ class {class_name}({class_detail['super']}):
     def {prop_name}(self, list_objs: List[{dtype if dtype in datatype.values() else f"'{dtype}'"}]):
         if list_objs == None:
             self.__{prop_name} = []
-        else:
-            self.__{prop_name} = list_objs'''
+            return
+        for obj in list_objs:
+            self.add_{prop_name}(obj)'''
+
+                # Set inverse attribute if it exists
                 if inverseRoleName:
                     TEXT += f'''
-        if list_objs and len(list_objs):
+        if len(list_objs):
             if isinstance(list_objs[0].{inverseRoleName}, list):
                 for obj in list_objs:
                     obj.add_{inverseRoleName}(self)

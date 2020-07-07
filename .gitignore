@@ -358,3 +358,4 @@ build
 *.egg*
 *cache*
 tests/output.py
+tests/output.xml

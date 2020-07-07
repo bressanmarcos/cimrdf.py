@@ -192,6 +192,15 @@ def test_write_to_file():
 
     d.tofile('./tests/output.xml')
 
+
+def test_read_from_file():
+    from tests.output import Length, Decimal, BusbarSection, ACLineSegment, Terminal, Resistance, ConnectivityNode, UnitMultiplier, UnitSymbol, Reactance, DocumentCIMRDF
+
+    d = DocumentCIMRDF()
+    d.fromfile('./tests/output.xml')
+
+    d.dump()
+
 if __name__ == "__main__":
     test_output_generation()
     test_raises_validation_error()

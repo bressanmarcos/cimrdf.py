@@ -2,9 +2,11 @@ import builtins
 import io
 import os
 import sys
+
 import pytest
 from unittest.mock import patch
-sys.path.insert(0, '../')
+
+sys.path.insert(0, os.getcwd())
 from cimrdfpy import generator
 
 
@@ -41,20 +43,20 @@ def delete_generated_files(monkeypatch):
 
 
 def test_output_generation():
-    with patch.object(sys, 'argv', ['', 'test_rdfs.xml', 'output.py']):
+    with patch.object(sys, 'argv', ['', './tests/test_rdfs.xml', './tests/output.py']):
         generator.main()
 
 
 def test_raises_validation_error():
-    from output import Switch
+    from tests.output import Switch
     with pytest.raises(ValueError):
         s = Switch()
         s.validate()
 
 
 def test_import_export():
-    from output import BaseVoltage, BusbarSection, Voltage, UnitSymbol, UnitMultiplier, Decimal
-    from output import DocumentCIMRDF
+    from tests.output import BaseVoltage, BusbarSection, Voltage, UnitSymbol, UnitMultiplier, Decimal
+    from tests.output import DocumentCIMRDF
     from xml.etree import ElementTree as ET
     bv = BaseVoltage()
     v = Voltage()
@@ -67,7 +69,7 @@ def test_import_export():
 
 
 def test_recover_from_xml():
-    from output import EquivalentInjection, Terminal, Switch, ConnectivityNode, DocumentCIMRDF
+    from tests.output import EquivalentInjection, Terminal, Switch, ConnectivityNode, DocumentCIMRDF
 
     ei = EquivalentInjection()
     ei.IdentifiedObject_mRID = 'EquivalentNW243'
@@ -115,7 +117,7 @@ def test_recover_from_xml():
 
 def test_new_version():
 
-    from output import EquivalentInjection, Terminal, Switch, ConnectivityNode, DocumentCIMRDF
+    from tests.output import EquivalentInjection, Terminal, Switch, ConnectivityNode, DocumentCIMRDF
 
     t1 = Terminal()
     t2 = Terminal()
@@ -127,7 +129,7 @@ def test_new_version():
     doc.dump()
 
 def test_new_version_debug():
-    from output import Substation, Feeder, DocumentCIMRDF
+    from tests.output import Substation, Feeder, DocumentCIMRDF
 
     substation_1 = Substation(IdentifiedObject_mRID='S1')
     substation_2 = Substation(IdentifiedObject_mRID='S2')
@@ -152,7 +154,7 @@ def test_new_version_debug():
     assert not (substation_1.Substation_SubstationFeeder is substation_2.Substation_SubstationFeeder)
 
 def test_recursive_add():
-    from output import Length, Decimal, BusbarSection, ACLineSegment, Terminal, Resistance, ConnectivityNode, UnitMultiplier, UnitSymbol, Reactance, DocumentCIMRDF
+    from tests.output import Length, Decimal, BusbarSection, ACLineSegment, Terminal, Resistance, ConnectivityNode, UnitMultiplier, UnitSymbol, Reactance, DocumentCIMRDF
 
     d = DocumentCIMRDF()
     b = BusbarSection(
@@ -171,8 +173,8 @@ def test_recursive_add():
     assert all(any(isinstance(obj, dtype) for obj in d.resources) for dtype in (Length, BusbarSection, Terminal, ConnectivityNode, Resistance, Reactance))
     assert all(all(not isinstance(obj, dtype) for dtype in (UnitMultiplier, UnitSymbol, Decimal)) for obj in d.resources)
 
-def write_to_file():
-    from output import Length, Decimal, BusbarSection, ACLineSegment, Terminal, Resistance, ConnectivityNode, UnitMultiplier, UnitSymbol, Reactance, DocumentCIMRDF
+def test_write_to_file():
+    from tests.output import Length, Decimal, BusbarSection, ACLineSegment, Terminal, Resistance, ConnectivityNode, UnitMultiplier, UnitSymbol, Reactance, DocumentCIMRDF
 
     d = DocumentCIMRDF()
     b = BusbarSection(
@@ -188,4 +190,15 @@ def write_to_file():
 
     d.dump()
 
-    d.tofile('output.xml')
+    d.tofile('./tests/output.xml')
+
+if __name__ == "__main__":
+    test_output_generation()
+    test_raises_validation_error()
+    test_import_export()
+    test_recover_from_xml()
+    test_new_version()
+    test_new_version_debug()
+    test_recursive_add()
+    test_write_to_file()
+    test_read_from_file()

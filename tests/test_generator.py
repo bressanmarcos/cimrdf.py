@@ -57,13 +57,10 @@ def test_raises_validation_error():
 def test_import_export():
     from tests.output import BaseVoltage, BusbarSection, Voltage, UnitSymbol, UnitMultiplier, Decimal
     from tests.output import DocumentCIMRDF
-    from xml.etree import ElementTree as ET
     bv = BaseVoltage()
     v = Voltage()
-    v.Voltage_multiplier = UnitMultiplier(UnitMultiplier.k)
-    v.Voltage_unit = UnitSymbol(UnitSymbol.V)
-    v.Voltage_value = '2.001'
-    bv.BaseVoltage_nominalVoltage = v
+    v.value, v.multiplier, v.unit = '69 k V'.split()
+    bv.nominalVoltage = v
     document = DocumentCIMRDF([v, bv])
     document.dump()
 
@@ -72,24 +69,25 @@ def test_recover_from_xml():
     from tests.output import EquivalentInjection, Terminal, Switch, ConnectivityNode, DocumentCIMRDF
 
     ei = EquivalentInjection()
-    ei.IdentifiedObject_mRID = 'EquivalentNW243'
+    ei.mRID = 'EquivalentNW243'
     t = Terminal()
-    t.Terminal_sequenceNumber = 1
-    t.Terminal_ConductingEquipment = ei
+    t.sequenceNumber = 1
+    t.ConductingEquipment = ei
 
     s = Switch()
-    s.Switch_normalOpen = True
-    s.IdentifiedObject_mRID = 'SW12'
+    s.normalOpen = True
+    s.mRID = 'SW12'
     t1 = Terminal()
-    t1.Terminal_sequenceNumber = 1
-    t1.Terminal_ConductingEquipment = s
+    t1.sequenceNumber = 1
+    t1.ConductingEquipment = s
     t2 = Terminal()
-    t2.Terminal_sequenceNumber = 2
-    t2.Terminal_ConductingEquipment = s
+    t2.sequenceNumber = 2
+    t2.ConductingEquipment = s
 
     cn = ConnectivityNode()
-    cn.IdentifiedObject_mRID = 'Node23'
-    cn.ConnectivityNode_Terminals = [t1, t]
+    cn.mRID = 'Node23'
+    cn.add_Terminals(t1)
+    cn.add_Terminals(t)
 
     doc1 = DocumentCIMRDF([ei, t, s, t1, t2, cn])
 
@@ -121,9 +119,9 @@ def test_new_version():
 
     t1 = Terminal()
     t2 = Terminal()
-    s1 = Switch(Switch_normalOpen=True, Switch_open=False, IdentifiedObject_mRID='CH12', ConductingEquipment_Terminals=[t1, t2])
-    print(s1.ConductingEquipment_Terminals)
-    cn = ConnectivityNode(ConnectivityNode_Terminals=[t1], IdentifiedObject_mRID='COnnectivityNode')
+    s1 = Switch(normalOpen=True, open=False, mRID='CH12', Terminals=[t1, t2])
+    print(s1.Terminals)
+    cn = ConnectivityNode(Terminals=[t1], mRID='COnnectivityNode')
 
     doc = DocumentCIMRDF([s1, t1, t2, cn])
     doc.dump()
@@ -131,41 +129,51 @@ def test_new_version():
 def test_new_version_debug():
     from tests.output import Substation, Feeder, DocumentCIMRDF
 
-    substation_1 = Substation(IdentifiedObject_mRID='S1')
-    substation_2 = Substation(IdentifiedObject_mRID='S2')
-    substation_3 = Substation(IdentifiedObject_mRID='S3')
+    substation_1 = Substation(mRID='S1')
+    substation_2 = Substation(mRID='S2')
+    substation_3 = Substation(mRID='S3')
 
-    feeder_1_s1 = Feeder(IdentifiedObject_mRID='S1_AL1', Feeder_FeedingSubstation=substation_1)
-    feeder_2_s1 = Feeder(IdentifiedObject_mRID='S1_AL2', Feeder_FeedingSubstation=substation_1)
-    feeder_3_s1 = Feeder(IdentifiedObject_mRID='S1_AL3', Feeder_FeedingSubstation=substation_1)
-    feeder_4_s1 = Feeder(IdentifiedObject_mRID='S1_AL4', Feeder_FeedingSubstation=substation_1)
+    feeder_1_s1 = Feeder(mRID='S1_AL1', FeedingSubstation=substation_1)
+    feeder_2_s1 = Feeder(mRID='S1_AL2', FeedingSubstation=substation_1)
+    feeder_3_s1 = Feeder(mRID='S1_AL3', FeedingSubstation=substation_1)
+    feeder_4_s1 = Feeder(mRID='S1_AL4', FeedingSubstation=substation_1)
 
-    feeder_1_s2 = Feeder(IdentifiedObject_mRID='S2_AL1', Feeder_FeedingSubstation=substation_2)
-    feeder_2_s2 = Feeder(IdentifiedObject_mRID='S2_AL2', Feeder_FeedingSubstation=substation_2)
+    feeder_1_s2 = Feeder(mRID='S2_AL1', FeedingSubstation=substation_2)
+    feeder_2_s2 = Feeder(mRID='S2_AL2', FeedingSubstation=substation_2)
 
-    feeder_1_s3 = Feeder(IdentifiedObject_mRID='S3_AL1', Feeder_FeedingSubstation=substation_3)
+    feeder_1_s3 = Feeder(mRID='S3_AL1', FeedingSubstation=substation_3)
 
     doc = DocumentCIMRDF([substation_1, substation_2, substation_3, 
     feeder_1_s1, feeder_2_s1, feeder_3_s1, feeder_4_s1, feeder_1_s2, feeder_2_s2, feeder_1_s3])
 
     doc.dump()
 
-    assert (substation_1.Substation_SubstationFeeder is substation_1.Substation_SubstationFeeder)
-    assert not (substation_1.Substation_SubstationFeeder is substation_2.Substation_SubstationFeeder)
+    assert (substation_1.SubstationFeeder is substation_1.SubstationFeeder)
+    assert not (substation_1.SubstationFeeder is substation_2.SubstationFeeder)
 
 def test_recursive_add():
     from tests.output import Length, Decimal, BusbarSection, ACLineSegment, Terminal, Resistance, ConnectivityNode, UnitMultiplier, UnitSymbol, Reactance, DocumentCIMRDF
 
     d = DocumentCIMRDF()
     b = BusbarSection(
-        IdentifiedObject_mRID='sad', 
-        ConductingEquipment_Terminals=[
+        mRID='sad', 
+        Terminals=[
             Terminal(
-                Terminal_sequenceNumber=2, 
-                Terminal_ConnectivityNode=ConnectivityNode(
-                    IdentifiedObject_mRID='CN'))])
-    a = ACLineSegment(IdentifiedObject_mRID='id', ACLineSegment_r=Resistance(UnitMultiplier('k'), UnitSymbol('ohm'), Decimal('123')), ACLineSegment_x=Reactance(UnitMultiplier('k'), UnitSymbol('ohm'), Decimal('123')), ACLineSegment_x0=Reactance(UnitMultiplier('k'), UnitSymbol('ohm'), Decimal('123')), ACLineSegment_r0=Resistance(UnitMultiplier('k'), UnitSymbol('ohm'), Decimal('123')))
-    a.Conductor_length = Length(UnitMultiplier('none'), UnitSymbol('m'), Decimal('2342234.2342'))
+                sequenceNumber=2, 
+                ConnectivityNode=ConnectivityNode(
+                    mRID='CN'
+                )
+            )
+        ]
+    )
+    a = ACLineSegment(
+            mRID='id', 
+            r=Resistance('k', 'ohm', '123'), 
+            x=Reactance('k', 'ohm', '123'), 
+            x0=Reactance('k', 'ohm', '123'), 
+            r0=Resistance('k', 'ohm', '123')
+        )
+    a.length = Length('none', 'm', '2342234.2342')
     d.add_recursively([b, a])
 
     d.dump()
@@ -178,14 +186,20 @@ def test_write_to_file():
 
     d = DocumentCIMRDF()
     b = BusbarSection(
-        IdentifiedObject_mRID='sad', 
-        ConductingEquipment_Terminals=[
+        mRID='sad', 
+        Terminals=[
             Terminal(
-                Terminal_sequenceNumber=2, 
-                Terminal_ConnectivityNode=ConnectivityNode(
-                    IdentifiedObject_mRID='CN'))])
-    a = ACLineSegment(IdentifiedObject_mRID='id', ACLineSegment_r=Resistance(UnitMultiplier('k'), UnitSymbol('ohm'), Decimal('123')), ACLineSegment_x=Reactance(UnitMultiplier('k'), UnitSymbol('ohm'), Decimal('123')), ACLineSegment_x0=Reactance(UnitMultiplier('k'), UnitSymbol('ohm'), Decimal('123')), ACLineSegment_r0=Resistance(UnitMultiplier('k'), UnitSymbol('ohm'), Decimal('123')))
-    a.Conductor_length = Length(UnitMultiplier('none'), UnitSymbol('m'), Decimal('2342234.2342'))
+                sequenceNumber=2, 
+                ConnectivityNode=ConnectivityNode(
+                    mRID='CN'))])
+    a = ACLineSegment(
+        mRID='id', 
+        r=Resistance('k', 'ohm', '123'), 
+        x=Reactance('k', 'ohm', '123'), 
+        x0=Reactance('k', 'ohm', '123'), 
+        r0=Resistance('k', 'ohm', '123')
+    )
+    a.length = Length('none', 'm', '2342234.2342')
     d.add_recursively([b, a])
 
     d.dump()

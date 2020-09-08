@@ -182,7 +182,7 @@ def main():
                 minBound, maxBound = 0, float('Inf')
             else:
                 minBound, maxBound = 2 * [int(new_property['multiplicity'])]
-            yield (prop_name.replace(".", "_"), dtype.replace(".", "_"), inverseRoleName and inverseRoleName.replace(".", "_"), minBound, maxBound, comments.replace("\n", " "))
+            yield (prop_name.split(".")[1], dtype, inverseRoleName and inverseRoleName.split(".")[1], minBound, maxBound, comments.replace("\n", " "))
 
     TEXT = '''from decimal import Decimal
 from enum import Enum
@@ -257,7 +257,7 @@ def _import(root):
         uri = '#' + get_element_URI(child).split('#')[1]
         instance = instances_dict[uri]
         for resource_item in child:
-            dtype = get_type(resource_item).replace('.', '_')
+            dtype = get_type(resource_item).split('.')[1]
             instance_attribute = getattr(instance, dtype)
             if __RESOURCE_ATTRIB in resource_item.attrib:
                 referenced_resource_uri = resource_item.attrib[__RESOURCE_ATTRIB]
@@ -389,7 +389,7 @@ class {class_name}({class_detail['super']}):
     def {prop_name}(self, value: {dtype if dtype in datatype.values() else f"'{dtype}'"}):
         if value == None:
             self.__{prop_name} = None
-        elif not hasattr(self, '{prop_name}') or not self.{prop_name} is value:'''
+        elif not hasattr(self, '{prop_name}') or self.{prop_name} is not value:'''
 
                 # Boolean type
                 if dtype == 'bool':
@@ -494,22 +494,22 @@ class {class_name}({class_detail['super']}):
 
                 if dtype == 'bool': # If it is a boolean value
                     TEXT += f'''
-            prop = ET.SubElement(root, '{'{'+__BASE_NS+'}'}{prop_name.replace('_','.')}')
+            prop = ET.SubElement(root, '{'{'+__BASE_NS+'}'}{f'{class_name}.{prop_name}'}')
             prop.text = {f'str(self.{prop_name}).lower()'}'''
 
                 elif dtype in datatype.values(): # If it is another primitive
                     TEXT += f'''
-            prop = ET.SubElement(root, '{'{'+__BASE_NS+'}'}{prop_name.replace('_','.')}')
+            prop = ET.SubElement(root, '{'{'+__BASE_NS+'}'}{f'{class_name}.{prop_name}'}')
             prop.text = {f'str(self.{prop_name})'}'''
 
                 elif dtype in enumerations: # If it is an enumeration
                     TEXT += f'''
-            prop = ET.SubElement(root, '{'{'+__BASE_NS+'}'}{prop_name.replace('_','.')}')
+            prop = ET.SubElement(root, '{'{'+__BASE_NS+'}'}{f'{class_name}.{prop_name}'}')
             prop.text = {f'self.{prop_name}.value'}'''
 
                 else: # if it is a complex type
                     TEXT += f'''
-            ET.SubElement(root, '{'{'+__BASE_NS+'}'}{prop_name.replace('_','.')}', attrib={"{'{" +__RDF_NS+"}"}resource': self.__{prop_name+'.URI}'})'''
+            ET.SubElement(root, '{'{'+__BASE_NS+'}'}{f'{class_name}.{prop_name}'}', attrib={"{'{" +__RDF_NS+"}"}resource': self.__{prop_name+'.URI}'})'''
             
 
             elif maxBound >= 2:  # If it is a list of objects
@@ -520,22 +520,22 @@ class {class_name}({class_detail['super']}):
 
                 if dtype == 'bool': # If they are primitives
                     TEXT += f'''
-                prop = ET.SubElement(root, '{'{'+__BASE_NS+'}'}{prop_name.replace('_','.')}')
+                prop = ET.SubElement(root, '{'{'+__BASE_NS+'}'}{f'{class_name}.{prop_name}'}')
                 prop.text = {f'str(item).lower()'}'''
             
                 elif dtype in datatype.values(): # If they are other primitives
                     TEXT += f'''
-                prop = ET.SubElement(root, '{'{'+__BASE_NS+'}'}{prop_name.replace('_','.')}')
+                prop = ET.SubElement(root, '{'{'+__BASE_NS+'}'}{f'{class_name}.{prop_name}'}')
                 prop.text = str(item)'''
                 
                 elif dtype in enumerations: # If they are enumerations
                     TEXT += f'''
-                prop = ET.SubElement(root, '{'{'+__BASE_NS+'}'}{prop_name.replace('_','.')}')
+                prop = ET.SubElement(root, '{'{'+__BASE_NS+'}'}{f'{class_name}.{prop_name}'}')
                 prop.text = item.value'''
 
                 else: # if it is a complex type
                     TEXT += f'''
-                ET.SubElement(root, '{'{'+__BASE_NS+'}'}{prop_name.replace('_','.')}', attrib={"{'{" +__RDF_NS+"}"}resource': item.URI{'}'})'''
+                ET.SubElement(root, '{'{'+__BASE_NS+'}'}{f'{class_name}.{prop_name}'}', attrib={"{'{" +__RDF_NS+"}"}resource': item.URI{'}'})'''
         TEXT += '''
         return root'''
     
@@ -568,7 +568,6 @@ class {class_name}({class_detail['super']}):
         TEXT += '\n'
 
     TEXT += '''
-
 __all__ = [
     'DocumentCIMRDF',
     '''

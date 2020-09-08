@@ -1,10 +1,18 @@
 from output import *
 
+# Create instances and attributes
 ei = EquivalentInjection()
 ei.IdentifiedObject_mRID = 'EquivalentNW243'
-t = Terminal()
-t.Terminal_sequenceNumber = 1
-t.Terminal_ConductingEquipment = ei
+
+# `list` type attributes might use `add_` methods to insert elements
+t = Terminal(Terminal_sequenceNumber=1)
+ei.add_ConductingEquipment_Terminals(t)
+
+# The backward linkage between instances is automatic, e.g., 
+# the last command is equivalent to
+# t.Terminal_ConductingEquipment = ei
+# (The bi-directional link must be explicitly specified
+# in the rdf:Property, inside the CIMXML file.)
 
 s = Switch()
 s.Switch_normalOpen = True
@@ -20,23 +28,42 @@ cn = ConnectivityNode()
 cn.IdentifiedObject_mRID = 'Node23'
 cn.ConnectivityNode_Terminals = [t1, t]
 
-new = DocumentCIMRDF([ei, t, s, t1, t2, cn])
+# Create CIMRDF document instance
+doc1 = DocumentCIMRDF()
 
-# Print to stdout
-new.dump()
+# Add elements individually
+doc1.add_elements([ei]) # ...
+
+# Or insert them into the document recursively 
+# (including linked instances)
+doc1.add_recursively(s)
+
+# Print doc to stdout (for debug purposes)
+doc1.dump()
 
 ###################################################
-# Convert to string
-string = new.tostring()
+# Convert doc into a string
+string = doc1.tostring()
+
+# Or an ElementTree
+etree = doc1.pack()
+
+# Or to a file
+doc1.tofile('example_instance.xml')
 
 ###################################################
 
-# Read the string to recover instances
-instances = fromstring(string)
+# Retrieve back elements from string
+doc2 = DocumentCIMRDF()
+doc2.fromstring(string)
+
+# or from a file
+doc3 = DocumentCIMRDF()
+doc3.fromfile('example_instance.xml')
+
+# Access instances in `resources` attribute
+instances = doc2.resources
 print(instances)
 
-renew = DocumentCIMRDF()
-renew.add_elements(list(instances.values()))
-
-# Print to stdout again for comparison
-renew.dump()
+# Print doc to stdout again for comparison
+doc2.dump()

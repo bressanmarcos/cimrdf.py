@@ -359,3 +359,5 @@ build
 *cache*
 tests/output.py
 tests/output.xml
+examples/example_instance.xml
+examples/output.py

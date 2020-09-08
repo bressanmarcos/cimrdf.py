@@ -1,6 +1,7 @@
 from decimal import Decimal
 from functools import cmp_to_key
 from xml.etree import ElementTree
+from itertools import chain
 
 __RDF_NS = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 __RDFS_NS = "http://www.w3.org/2000/01/rdf-schema#"
@@ -565,6 +566,15 @@ class {class_name}({class_detail['super']}):
                 #<<<<<<<<<<<<<<<<<<<<<<
 
         TEXT += '\n'
+
+    TEXT += '''
+
+__all__ = [
+    'DocumentCIMRDF',
+    '''
+    TEXT += ',\n    '.join(f"'{e}'" for e in sorted(chain(enumerations, classes)))
+    TEXT += '\n]'
+    TEXT += '\n'
 
     with open(output_file, 'w') as file:
         file.write(TEXT)

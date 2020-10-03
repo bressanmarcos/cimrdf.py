@@ -359,8 +359,7 @@ class {class_name}({class_detail['super']}):
         super().__init__('''
 
             # Super call attributes
-            for prop_name, dtype, inverseRoleName, minBound, maxBound, comments in property_iterator(classes[class_detail['super']]['superproperties']):
-                TEXT += f'''{prop_name} = {prop_name}, '''
+            TEXT += ', '.join(f'{prop_name}={prop_name}' for prop_name, dtype, inverseRoleName, minBound, maxBound, comments in property_iterator(classes[class_detail['super']]['superproperties']))
             TEXT += ')'
 
         # URI generate URI

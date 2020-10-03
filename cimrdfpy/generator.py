@@ -565,6 +565,10 @@ class {class_name}({class_detail['super']}):
             raise ValueError(f'Incorrect datatype in {prop_name} [{class_name}] (expected {dtype} but encountered {'{self.'+prop_name+'.__class__.__name__}'} instead)')'''
                 #<<<<<<<<<<<<<<<<<<<<<<
 
+        # If no property, it only passes
+        if not class_detail['super'] and not len(property_iter):
+            TEXT += '''
+        pass'''
         TEXT += '\n'
 
     TEXT += '''

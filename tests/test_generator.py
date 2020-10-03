@@ -66,10 +66,13 @@ def test_import_export():
 
 
 def test_recover_from_xml():
-    from tests.output import EquivalentInjection, Terminal, Switch, ConnectivityNode, DocumentCIMRDF
+    from tests.output import Voltage, BaseVoltage, EquivalentInjection, Terminal, Switch, ConnectivityNode, DocumentCIMRDF
 
     ei = EquivalentInjection()
     ei.mRID = 'EquivalentNW243'
+    v = Voltage('k', 'V', '13.8')
+    bv = BaseVoltage(nominalVoltage=v)
+    ei.BaseVoltage = bv
     t = Terminal()
     t.sequenceNumber = 1
     t.ConductingEquipment = ei
@@ -89,7 +92,7 @@ def test_recover_from_xml():
     cn.add_Terminals(t1)
     cn.add_Terminals(t)
 
-    doc1 = DocumentCIMRDF([ei, t, s, t1, t2, cn])
+    doc1 = DocumentCIMRDF([ei, bv, v, t, s, t1, t2, cn])
 
     # Print to stdout
     doc1.dump()
@@ -167,18 +170,16 @@ def test_recursive_add():
         ]
     )
     a = ACLineSegment(
-            mRID='id', 
-            r=Resistance('k', 'ohm', '123'), 
-            x=Reactance('k', 'ohm', '123'), 
-            x0=Reactance('k', 'ohm', '123'), 
-            r0=Resistance('k', 'ohm', '123')
+            mRID='id'
         )
     a.length = Length('none', 'm', '2342234.2342')
     d.add_recursively([b, a])
 
     d.dump()
 
-    assert all(any(isinstance(obj, dtype) for obj in d.resources) for dtype in (Length, BusbarSection, Terminal, ConnectivityNode, Resistance, Reactance))
+    # All listed types are present in the resources
+    assert all(any(isinstance(obj, dtype) for obj in d.resources) for dtype in (Length, BusbarSection, Terminal, ConnectivityNode))
+    # None of the listed types should be in the resources (they are enumerations or simple types and are not resources)
     assert all(all(not isinstance(obj, dtype) for dtype in (UnitMultiplier, UnitSymbol, Decimal)) for obj in d.resources)
 
 def test_write_to_file():
@@ -193,11 +194,7 @@ def test_write_to_file():
                 ConnectivityNode=ConnectivityNode(
                     mRID='CN'))])
     a = ACLineSegment(
-        mRID='id', 
-        r=Resistance('k', 'ohm', '123'), 
-        x=Reactance('k', 'ohm', '123'), 
-        x0=Reactance('k', 'ohm', '123'), 
-        r0=Resistance('k', 'ohm', '123')
+        mRID='id'
     )
     a.length = Length('none', 'm', '2342234.2342')
     d.add_recursively([b, a])
